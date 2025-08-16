@@ -10,6 +10,7 @@ use App\Jobs\SendEmailResetPassword;
 use App\Repositories\PasswordRestRepository;
 use App\Repositories\PublisherResourceRepository;
 use App\Repositories\UserRepository;
+use App\Traits\ApiResponseTrait;
 use Carbon\Carbon;
 use Illuminate\Http\File;
 use Illuminate\Http\Request;
@@ -21,6 +22,7 @@ use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
+    use ApiResponseTrait;
     protected $userRepository;
     protected $utility;
     protected $passwordResetRepository;
@@ -34,28 +36,23 @@ class UserController extends Controller
         $this->passwordResetRepository = $passwordResetRepository;
         $this->utility = $utility;
     }
-   
+
     public function me()
     {
-        $user = Auth::user();
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Không tìm thấy user',
-                'type' => 'data_user_errors',
-            ], 404);
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return $this->notFoundResponse('User not found');
+            }
+
+            $dataUser = $this->userRepository->getDataUser($user->id);
+
+            return $this->successResponse($dataUser, 'User information retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->serverErrorResponse('Failed to retrieve user information', $e->getMessage());
         }
-
-        $dataUser = $this->userRepository->getDataUser($user->id); //can be remove, because we already get user from auth
-
-        return response()->json([
-            'success' => true,
-            'data' => $dataUser,
-            'message' => 'Thông tin tài khoản user',
-            'type' => 'data_user_success',
-        ], 200);
     }
-  
+
 
     public function updateCurrentUser(UserRequest $request)
     {
@@ -80,47 +77,34 @@ class UserController extends Controller
             'type' => 'update_user_success',
         ], 200);
     }
-    
+
     public function changePassword(Request $request)
     {
-        // Validate the incoming request
-        $validator = Validator::make($request->all(), [
-            'current_password' => 'required|string',
-            'new_password' => 'required|string|min:8|confirmed',
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'current_password' => 'required|string',
+                'new_password' => 'required|string|min:8|confirmed',
+            ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'errors' => $validator->errors()
-            ], 422);
+            if ($validator->fails()) {
+                return $this->errorResponse('Validation error', 422, $validator->errors());
+            }
+
+            $user = Auth::user();
+
+            if (!Hash::check($request->current_password, $user->password)) {
+                return $this->errorResponse('Current password is incorrect', 400);
+            }
+
+            $user->password = bcrypt($request->new_password);
+            $user->save();
+
+            return $this->successResponse(null, 'Password changed successfully');
+        } catch (\Exception $e) {
+            return $this->serverErrorResponse('Failed to change password', $e->getMessage());
         }
-
-        // Get the authenticated user
-        $user = Auth::user();
-
-        // Check if the current password is correct
-        if (!Hash::check($request->current_password, $user->password)) {
-            return response()->json(
-                [
-                    'success' => false,
-                    'message' => 'Mật khẩu không trùng khớp',
-                    'type' => 'password_user_incorrect',
-                ],
-                400
-            );
-        }
-
-        // Update the password
-        $user->password = bcrypt($request->new_password);
-        $user->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Thay đổi mật khẩu thành công',
-            'type' => 'password_change_success',
-        ], 201);
     }
-  
+
     public function forgotPassword(Request $request)
     {
         //check mail
@@ -168,7 +152,7 @@ class UserController extends Controller
             'type' => 'send_password_success',
         ], 201);
     }
-  
+
     public function resetPassword(Request $request, $token)
     {
         //update password
