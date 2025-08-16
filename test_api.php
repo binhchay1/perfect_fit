@@ -114,7 +114,8 @@ if ($afterLogoutResponse['status'] === 401) {
     echo "✅ Correctly denied access after logout!\n\n";
 } else {
     echo "❌ Still has access after logout (this shouldn't happen)!\n";
-    echo "   Status: " . $afterLogoutResponse['status'] . "\n\n";
+    echo "   Status: " . $afterLogoutResponse['status'] . "\n";
+    echo "   Response: " . json_encode($afterLogoutResponse['body'], JSON_PRETTY_PRINT) . "\n\n";
 }
 
 echo "🎉 API Testing Complete!\n";

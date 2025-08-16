@@ -38,6 +38,7 @@ class AuthController extends Controller
                 return $this->unauthorizedResponse('Invalid credentials');
             }
 
+            /** @var \App\Models\User $user */
             $user = Auth::user();
 
             // Check if user is active
@@ -97,6 +98,7 @@ class AuthController extends Controller
             $input['role'] = 'user'; // Default role
             $input['ip_address'] = $request->ip();
 
+            /** @var \App\Models\User $user */
             $user = User::create($input);
             $tokenResult = $user->createToken('Perfect Fit API');
 
@@ -123,6 +125,7 @@ class AuthController extends Controller
     public function refreshToken(Request $request)
     {
         try {
+            /** @var \App\Models\User $user */
             $user = Auth::user();
 
             if (!$user) {

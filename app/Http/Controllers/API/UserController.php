@@ -96,8 +96,8 @@ class UserController extends Controller
                 return $this->errorResponse('Current password is incorrect', 400);
             }
 
-            $user->password = bcrypt($request->new_password);
-            $user->save();
+            $input = ['password' => bcrypt($request->new_password)];
+            $this->userRepository->updatePassword($user->email, $input);
 
             return $this->successResponse(null, 'Password changed successfully');
         } catch (\Exception $e) {
