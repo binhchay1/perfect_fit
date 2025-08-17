@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -94,13 +96,16 @@ class AuthController extends Controller
 
             $input = $request->all();
             $input['password'] = Hash::make($input['password']);
-            $input['status'] = 1; // Active by default
+            $input['status'] = 0; // Inactive until verified
             $input['role'] = 'user'; // Default role
             $input['ip_address'] = $request->ip();
+            $input['verification_token'] = Str::random(60);
 
             /** @var \App\Models\User $user */
             $user = User::create($input);
-            $tokenResult = $user->createToken('Perfect Fit API');
+
+            // Send verification email
+            $this->sendVerificationEmail($user);
 
             return $this->successResponse([
                 'user' => [
@@ -110,10 +115,8 @@ class AuthController extends Controller
                     'role' => $user->role,
                     'status' => $user->status
                 ],
-                'token' => $tokenResult->accessToken,
-                'token_type' => 'Bearer',
-                'expires_at' => $tokenResult->token->expires_at->toDateTimeString(),
-            ], 'User created successfully', 201);
+                'message' => 'Please check your email to verify your account'
+            ], 'User created successfully. Verification email sent.', 201);
         } catch (\Exception $e) {
             return $this->serverErrorResponse('Registration failed', $e->getMessage());
         }
@@ -202,5 +205,101 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             return $this->serverErrorResponse('Failed to retrieve user details', $e->getMessage());
         }
+    }
+
+    /**
+     * Verify user account via token
+     */
+    public function verifyAccount($token)
+    {
+        try {
+            $user = User::where('verification_token', $token)->first();
+
+            if (!$user) {
+                return $this->errorResponse('Invalid verification token', 400);
+            }
+
+            if ($user->email_verified_at) {
+                return $this->errorResponse('Account already verified', 400);
+            }
+
+            $user->update([
+                'email_verified_at' => now(),
+                'status' => 1, // Activate account
+                'verification_token' => null
+            ]);
+
+            return $this->successResponse([
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                    'status' => $user->status,
+                    'email_verified_at' => $user->email_verified_at
+                ]
+            ], 'Account verified successfully');
+        } catch (\Exception $e) {
+            return $this->serverErrorResponse('Account verification failed', $e->getMessage());
+        }
+    }
+
+    /**
+     * Resend verification email
+     */
+    public function resendVerifyAccount(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email|exists:users,email',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->errorResponse(
+                    'Validation error',
+                    422,
+                    $validator->errors()
+                );
+            }
+
+            $user = User::where('email', $request->email)->first();
+
+            if ($user->email_verified_at) {
+                return $this->errorResponse('Account already verified', 400);
+            }
+
+            // Generate new verification token
+            $user->update([
+                'verification_token' => Str::random(60)
+            ]);
+
+            // Send verification email
+            $this->sendVerificationEmail($user);
+
+            return $this->successResponse(null, 'Verification email sent successfully');
+        } catch (\Exception $e) {
+            return $this->serverErrorResponse('Failed to resend verification email', $e->getMessage());
+        }
+    }
+
+    /**
+     * Send verification email to user
+     */
+    private function sendVerificationEmail(User $user)
+    {
+        $verificationUrl = url('/api/auth/verify/' . $user->verification_token);
+
+        // Simple email sending - you can customize this based on your mail setup
+        Mail::raw(
+            "Hello {$user->name},\n\n" .
+                "Please click the following link to verify your account:\n" .
+                "{$verificationUrl}\n\n" .
+                "If you did not create an account, please ignore this email.\n\n" .
+                "Thank you!",
+            function ($message) use ($user) {
+                $message->to($user->email)
+                    ->subject('Verify Your Account - Perfect Fit');
+            }
+        );
     }
 }

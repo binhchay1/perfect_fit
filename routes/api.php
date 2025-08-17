@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Route;
 // Authentication routes (Public)
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/register', [AuthController::class, 'register']);
+Route::get('/auth/verify/{token}', [AuthController::class, 'verifyAccount']);
+Route::post('/auth/verify/resend', [AuthController::class, 'resendVerifyAccount']);
 
 // Protected authentication routes
 Route::middleware('auth:api')->group(function () {
