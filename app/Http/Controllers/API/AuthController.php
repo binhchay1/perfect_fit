@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendEmail;
 use App\Models\User;
+use App\Models\UserVerify;
 use App\Traits\ApiResponseTrait;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -76,14 +79,17 @@ class AuthController extends Controller
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users',
-                'password' => 'required|string|min:6|confirmed',
-                'phone' => 'nullable|string|max:20',
-                'country' => 'nullable|string|max:100',
-                'province' => 'nullable|string|max:100',
-                'district' => 'nullable|string|max:100',
-                'ward' => 'nullable|string|max:100',
-                'address' => 'nullable|string|max:255',
-                'postal_code' => 'nullable|string|max:10',
+                'password' => 'required|string|min:6',
+
+//không cần những trường này vì register chỉ cần set name, mail, pass
+//                'password' => 'required|string|min:6|confirmed', //không cần set confirm
+//                'phone' => 'nullable|string|max:20',
+//                'country' => 'nullable|string|max:100',
+//                'province' => 'nullable|string|max:100',
+//                'district' => 'nullable|string|max:100',
+//                'ward' => 'nullable|string|max:100',
+//                'address' => 'nullable|string|max:255',
+//                'postal_code' => 'nullable|string|max:10',
             ]);
 
             if ($validator->fails()) {
@@ -93,19 +99,36 @@ class AuthController extends Controller
                     $validator->errors()
                 );
             }
-
+            
             $input = $request->all();
             $input['password'] = Hash::make($input['password']);
             $input['status'] = 0; // Inactive until verified
             $input['role'] = 'user'; // Default role
             $input['ip_address'] = $request->ip();
-            $input['verification_token'] = Str::random(60);
-
+            //$input['verification_token'] = Str::random(60); anh thấy có em set verification_token nhưng trong db lại không tạo để lưu
+            
             /** @var \App\Models\User $user */
             $user = User::create($input);
-
-            // Send verification email
-            $this->sendVerificationEmail($user);
+            
+            // Send verification email (tạo thêm bảng verify mail để xử lý mail)
+    
+            $token = Str::random(64);
+            $dataMail = [
+                'name' => $user->name,
+                'email' => $user->email,
+                'token' => $token,
+            ];
+            $userMail = $user->email;
+    
+            UserVerify::create([
+                'user_id' => $user->id,
+                'token' => $token,
+                'expires_at' => Carbon::now('Asia/Ho_Chi_Minh')->addHours(24), // Token expires in 24 hours
+            ]);
+    
+            //dùng job để xử lý mail
+            SendEmail::dispatch($userMail, $dataMail);
+           // $this->sendVerificationEmail($user);
 
             return $this->successResponse([
                 'user' => [
@@ -213,20 +236,34 @@ class AuthController extends Controller
     public function verifyAccount($token)
     {
         try {
-            $user = User::where('verification_token', $token)->first();
+            $userVerify = UserVerify::where('token', $token)->first();
 
-            if (!$user) {
+            if (!$userVerify) {
                 return $this->errorResponse('Invalid verification token', 400);
             }
+
+            if (!$userVerify->isValid()) {
+                if ($userVerify->isExpired()) {
+                    return $this->errorResponse('Verification token has expired', 400);
+                }
+                if ($userVerify->is_used) {
+                    return $this->errorResponse('Verification token has already been used', 400);
+                }
+            }
+
+            $user = $userVerify->user;
 
             if ($user->email_verified_at) {
                 return $this->errorResponse('Account already verified', 400);
             }
 
+            // Mark token as used
+            $userVerify->markAsUsed();
+
+            // Update user
             $user->update([
                 'email_verified_at' => now(),
                 'status' => 1, // Activate account
-                'verification_token' => null
             ]);
 
             return $this->successResponse([
@@ -269,12 +306,23 @@ class AuthController extends Controller
             }
 
             // Generate new verification token
-            $user->update([
-                'verification_token' => Str::random(60)
+            $token = Str::random(64);
+            
+            // Create new verification record
+            UserVerify::create([
+                'user_id' => $user->id,
+                'token' => $token,
+                'expires_at' => Carbon::now('Asia/Ho_Chi_Minh')->addHours(24), // Token expires in 24 hours
             ]);
 
             // Send verification email
-            $this->sendVerificationEmail($user);
+            $dataMail = [
+                'name' => $user->name,
+                'email' => $user->email,
+                'token' => $token,
+            ];
+            
+            SendEmail::dispatch($user->email, $dataMail);
 
             return $this->successResponse(null, 'Verification email sent successfully');
         } catch (\Exception $e) {
@@ -282,24 +330,5 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * Send verification email to user
-     */
-    private function sendVerificationEmail(User $user)
-    {
-        $verificationUrl = url('/api/auth/verify/' . $user->verification_token);
 
-        // Simple email sending - you can customize this based on your mail setup
-        Mail::raw(
-            "Hello {$user->name},\n\n" .
-                "Please click the following link to verify your account:\n" .
-                "{$verificationUrl}\n\n" .
-                "If you did not create an account, please ignore this email.\n\n" .
-                "Thank you!",
-            function ($message) use ($user) {
-                $message->to($user->email)
-                    ->subject('Verify Your Account - Perfect Fit');
-            }
-        );
-    }
 }

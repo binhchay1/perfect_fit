@@ -24,10 +24,10 @@ return new class extends Migration
             $table->integer('status')->nullable();
             $table->string('profile_photo_path', 2048)->nullable();
             $table->string('facebook_id')->nullable();
-            $table->string('google_id') ->nullable();
+            $table->string('google_id')->nullable();
         });
     }
-    
+
     /**
      * Reverse the migrations.
      *
@@ -48,7 +48,7 @@ return new class extends Migration
             $table->dropColumn('status');
             $table->dropColumn('profile_photo_path', 2048);
             $table->dropColumn('facebook_id')->nullable();
-            $table->dropColumn('google_id') ->nullable();
+            $table->dropColumn('google_id')->nullable();
         });
     }
 };
