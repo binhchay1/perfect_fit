@@ -16,8 +16,17 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// Authentication routes (Public)
+Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/register', [AuthController::class, 'register']);
+Route::get('/auth/verify/{token}', [AuthController::class, 'verifyAccount']);
+Route::post('/auth/verify/resend', [AuthController::class, 'resendVerifyAccount']);
+
+// Protected authentication routes
+Route::middleware('auth:api')->group(function () {
+    Route::post('/auth/token/refresh', [AuthController::class, 'refreshToken']);
+    Route::post('/auth/logout', [AuthController::class, 'logout']);
+    Route::get('/auth/user', [AuthController::class, 'user']);
 });
 
 //user
@@ -25,7 +34,7 @@ Route::post('/forget-password', [UserController::class, 'forgotPassword'])->name
 Route::post('/reset-password/{token}', [UserController::class, 'resetPassword'])->name('reset.password');
 
 // Protected user routes
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:api')->group(function () {
     Route::get('/me', [UserController::class, 'me']);
     Route::post('/update-info', [UserController::class, 'updateCurrentUser']);
     Route::post('/change-password', [UserController::class, 'changePassword']);
