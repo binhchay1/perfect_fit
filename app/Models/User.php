@@ -32,6 +32,7 @@ class User extends Authenticatable
         'phone',
         'status',
         'profile_photo_path',
+        'email_verified_at',
         'facebook_id',
         'google_id',
     ];

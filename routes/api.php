@@ -26,7 +26,6 @@ Route::post('/auth/verify/resend', [AuthController::class, 'resendVerifyAccount'
 Route::middleware('auth:api')->group(function () {
     Route::post('/auth/token/refresh', [AuthController::class, 'refreshToken']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
-    Route::get('/auth/user', [AuthController::class, 'user']);
 });
 
 //user

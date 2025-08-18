@@ -14,9 +14,9 @@ use Illuminate\Support\Facades\Mail;
 
 class SendEmail implements ShouldQueue
 {
-    
+
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    
+
     protected $userMail;
     protected $dataMail;
     /**
@@ -27,18 +27,25 @@ class SendEmail implements ShouldQueue
         $this->userMail = $userMail;
         $this->dataMail = $dataMail;
     }
-    
+
     /**
      * Execute the job.
      */
     public function handle()
     {
         try {
-            Mail::to($this->userMail)->send(new SendUserEmail( $this->dataMail));
-    
+            Mail::to($this->userMail)->send(new SendUserEmail($this->dataMail));
+            \Log::info('Verification email sent successfully', [
+                'email' => $this->userMail,
+                'user_data' => $this->dataMail
+            ]);
         } catch (\Exception $ex) {
-        
+            \Log::error('Failed to send verification email', [
+                'email' => $this->userMail,
+                'error' => $ex->getMessage(),
+                'trace' => $ex->getTraceAsString()
+            ]);
+            throw $ex; // Re-throw so the job fails properly
         }
-    
     }
 }
