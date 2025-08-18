@@ -245,8 +245,7 @@ class AuthController extends Controller
             }
 
             // Check if token is expired (24 hours)
-            // $currentTime = Carbon::now('Asia/Ho_Chi_Minh');
-            $currentTime = '2025-08-19 22:22:35';
+            $currentTime = Carbon::now('Asia/Ho_Chi_Minh');
 
             if ($verifyUser->expires_at < $currentTime) {
                 return redirect()->away(env('FRONTEND_URL') . '/resend-email?email=' . $verifyUser->user->email . '&message=token_expired');
