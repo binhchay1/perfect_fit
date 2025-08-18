@@ -56,4 +56,23 @@ class User extends Authenticatable
         'password' => 'hashed',
         'status' => 'integer',
     ];
+
+    /**
+     * Get the verification tokens for the user.
+     */
+    public function verificationTokens()
+    {
+        return $this->hasMany(UserVerify::class);
+    }
+
+    /**
+     * Get the latest valid verification token.
+     */
+    public function getLatestValidToken()
+    {
+        return $this->verificationTokens()
+            ->valid()
+            ->latest()
+            ->first();
+    }
 }
