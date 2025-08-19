@@ -83,15 +83,6 @@ class AuthController extends Controller
                 'email' => 'required|string|email|max:255|unique:users',
                 'password' => 'required|string|min:6',
 
-                //không cần những trường này vì register chỉ cần set name, mail, pass
-                //                'password' => 'required|string|min:6|confirmed', //không cần set confirm
-                //                'phone' => 'nullable|string|max:20',
-                //                'country' => 'nullable|string|max:100',
-                //                'province' => 'nullable|string|max:100',
-                //                'district' => 'nullable|string|max:100',
-                //                'ward' => 'nullable|string|max:100',
-                //                'address' => 'nullable|string|max:255',
-                //                'postal_code' => 'nullable|string|max:10',
             ]);
 
             if ($validator->fails()) {
@@ -107,7 +98,6 @@ class AuthController extends Controller
             $input['status'] = 0; // Inactive until verified
             $input['role'] = 'user'; // Default role
             $input['ip_address'] = $request->ip();
-            //$input['verification_token'] = Str::random(60); anh thấy có em set verification_token nhưng trong db lại không tạo để lưu
 
             /** @var \App\Models\User $user */
             $user = User::create($input);
@@ -130,7 +120,6 @@ class AuthController extends Controller
 
             //dùng job để xử lý mail
             SendEmail::dispatch($userMail, $dataMail);
-            // $this->sendVerificationEmail($user);
 
             return $this->successResponse([
                 'user' => [
@@ -194,41 +183,6 @@ class AuthController extends Controller
             return $this->successResponse(null, 'Successfully logged out');
         } catch (\Exception $e) {
             return $this->serverErrorResponse('Failed to logout', $e->getMessage());
-        }
-    }
-
-    /**
-     * Get authenticated user details
-     */
-    public function user(Request $request)
-    {
-        try {
-            $user = Auth::user();
-
-            if (!$user) {
-                return $this->unauthorizedResponse('User not authenticated');
-            }
-
-            return $this->successResponse([
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'country' => $user->country,
-                'province' => $user->province,
-                'district' => $user->district,
-                'ward' => $user->ward,
-                'address' => $user->address,
-                'postal_code' => $user->postal_code,
-                'role' => $user->role,
-                'status' => $user->status,
-                'profile_photo_path' => $user->profile_photo_path,
-                'email_verified_at' => $user->email_verified_at,
-                'created_at' => $user->created_at,
-                'updated_at' => $user->updated_at,
-            ], 'User details retrieved successfully');
-        } catch (\Exception $e) {
-            return $this->serverErrorResponse('Failed to retrieve user details', $e->getMessage());
         }
     }
 
