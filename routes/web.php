@@ -16,3 +16,25 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Swagger Documentation Routes
+|--------------------------------------------------------------------------
+|
+| Routes for API documentation using Swagger
+|
+*/
+
+Route::get('/documentation', function () {
+    return view('vendor.l5-swagger.index', [
+        'documentation' => 'default',
+        'urlToDocs' => route('l5-swagger.default.docs'),
+        'useAbsolutePath' => config('l5-swagger.defaults.paths.use_absolute_path', true),
+        'operationsSorter' => config('l5-swagger.defaults.ui.operations_sort'),
+        'configUrl' => config('l5-swagger.defaults.paths.additional_config_url'),
+        'validatorUrl' => config('l5-swagger.defaults.ui.validator_url')
+    ]);
+})->name('api.documentation');
+
+// L5-Swagger will handle the /swagger-docs route automatically

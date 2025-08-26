@@ -1,66 +1,287 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Perfect Fit API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel-based API application with JWT authentication, Swagger documentation, and comprehensive user management.
 
-## About Laravel
+## 🚀 Quick Setup
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Prerequisites
+- PHP 8.2+
+- Composer
+- MySQL/PostgreSQL
+- Redis (for queue handling and email processing)
+- Node.js & NPM (optional, for frontend assets)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 1. Installation
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```bash
+# Clone the repository
+git clone <repository-url>
+cd perfect_fit
 
-## Learning Laravel
+# Install PHP dependencies
+composer install
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+# Install NPM dependencies (if needed)
+npm install
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+# Copy environment file
+cp .env.example .env
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 2. Environment Configuration
 
-## Laravel Sponsors
+Edit `.env` file with your database and application settings:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```env
+APP_NAME="Perfect Fit"
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://localhost:8000
 
-### Premium Partners
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=perfect_fit
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+# Redis Configuration (for queues and caching)
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+REDIS_DB=0
 
-## Contributing
+# Queue Configuration (Redis-based)
+QUEUE_CONNECTION=redis
+CACHE_DRIVER=redis
+SESSION_DRIVER=redis
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# Mail Configuration (for email verification)
+MAIL_MAILER=smtp
+MAIL_HOST=your_smtp_host
+MAIL_PORT=587
+MAIL_USERNAME=your_email
+MAIL_PASSWORD=your_password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@perfectfit.com
+MAIL_FROM_NAME="${APP_NAME}"
 
-## Code of Conduct
+# Swagger Configuration
+L5_SWAGGER_GENERATE_ALWAYS=true
+L5_SWAGGER_UI_DOC_EXPANSION=none
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 3. Application Setup
 
-## Security Vulnerabilities
+```bash
+# Generate application key
+php artisan key:generate
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# Create database (make sure your DB server is running)
+# Then run migrations
+php artisan migrate
 
-## License
+# Setup Laravel Passport for API authentication
+php artisan passport:keys --force
+php artisan passport:client --personal
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# Generate Swagger documentation
+php artisan l5-swagger:generate
+
+# Clear and cache config (optional, for production)
+php artisan config:cache
+php artisan route:cache
+```
+
+### 4. Database Seeding (Optional)
+
+```bash
+# Run seeders if available
+php artisan db:seed
+```
+
+### 5. Start Development Server
+
+```bash
+# Start Redis server (if not running as service)
+redis-server
+
+# Start Laravel queue worker (in separate terminal)
+php artisan queue:work
+
+# Start Laravel development server
+php artisan serve
+
+# Your application will be available at: http://localhost:8000
+```
+
+## 📚 API Documentation
+
+### Access Swagger Documentation
+
+Once your application is running, you can access the interactive API documentation at:
+
+**🔗 http://localhost:8000/documentation**
+
+The Swagger UI provides:
+- Interactive API testing
+- Complete endpoint documentation
+- Request/response examples
+- Authentication testing
+
+## 🔐 Authentication
+
+This API uses **Laravel Passport** for authentication:
+
+1. **Register** a new account via `/api/auth/register`
+2. **Verify** your email using the verification link
+3. **Login** via `/api/auth/login` to get your access token
+4. **Include the token** in subsequent requests:
+   ```
+   Authorization: Bearer your_access_token_here
+   ```
+
+### Testing Authentication in Swagger
+
+1. Go to `/documentation`
+2. Click the **Authorize** button (🔒)
+3. Enter: `Bearer your_access_token_here`
+4. Click **Authorize**
+5. Now you can test protected endpoints
+
+## 🛠 Development Commands
+
+```bash
+# Clear application cache
+php artisan cache:clear
+
+# Clear config cache
+php artisan config:clear
+
+# Clear route cache
+php artisan route:clear
+
+# Regenerate Swagger docs
+php artisan l5-swagger:generate
+
+# Run migrations with fresh start
+php artisan migrate:fresh
+
+# Run specific migration
+php artisan migrate --path=/database/migrations/specific_migration.php
+
+# Rollback migrations
+php artisan migrate:rollback
+
+# Check routes
+php artisan route:list
+```
+
+## 📝 Environment Variables Reference
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `REDIS_HOST` | Redis server host | `127.0.0.1` |
+| `REDIS_PORT` | Redis server port | `6379` |
+| `QUEUE_CONNECTION` | Queue driver (should be redis) | `sync` |
+| `CACHE_DRIVER` | Cache driver (redis recommended) | `file` |
+| `L5_SWAGGER_GENERATE_ALWAYS` | Auto-regenerate docs on each request | `false` |
+| `L5_SWAGGER_UI_DOC_EXPANSION` | Swagger UI default expansion | `none` |
+| `DB_*` | Database connection settings | - |
+| `MAIL_*` | Email service configuration | - |
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+**Passport Keys Not Generated:**
+```bash
+php artisan passport:keys --force
+php artisan passport:client --personal
+```
+
+
+
+**Database Connection Error:**
+- Check your `.env` database credentials
+- Ensure your database server is running
+- Create the database if it doesn't exist
+
+**Swagger Documentation Not Loading:**
+```bash
+php artisan l5-swagger:generate
+php artisan config:clear
+```
+
+**Redis Connection Error:**
+```bash
+# Check if Redis is running
+redis-cli ping
+
+# Start Redis if not running
+redis-server
+
+# Or install Redis if not installed:
+# Ubuntu/Debian: sudo apt install redis-server
+# macOS: brew install redis
+# Windows: Download from https://redis.io/download
+```
+
+**Queue Jobs Not Processing:**
+```bash
+# Make sure Redis is running
+redis-cli ping
+
+# Start queue worker
+php artisan queue:work
+
+# Clear failed jobs
+php artisan queue:clear
+```
+
+**Permission Errors:**
+```bash
+sudo chown -R $USER:www-data storage
+sudo chown -R $USER:www-data bootstrap/cache
+chmod -R 755 storage
+chmod -R 755 bootstrap/cache
+```
+
+## 🏗 Project Structure
+
+```
+perfect_fit/
+├── app/
+│   ├── Http/Controllers/API/
+│   │   ├── AuthController.php    # Authentication endpoints
+│   │   └── UserController.php    # User management endpoints
+├── config/
+│   └── l5-swagger.php            # Swagger configuration
+├── routes/
+│   ├── api.php                   # API routes
+│   └── web.php                   # Web routes (including docs)
+└── database/
+    └── migrations/               # Database migrations
+```
+
+## 📧 Support
+
+If you encounter any issues during setup, please check:
+1. PHP version compatibility (8.2+)
+2. All required extensions are installed
+3. Database connection is working
+4. Redis server is running and accessible
+5. Queue worker is running for email processing
+6. Environment variables are properly set
+
+### Email Processing Flow
+This application uses Redis queues for handling email sending:
+1. **Email verification** and **password reset** emails are queued
+2. **Queue worker** processes emails in background
+3. **Redis** stores queue jobs and handles job distribution
+4. Make sure both Redis and queue worker are running for emails to send
+
+---
+
+**Happy coding! 🚀**
