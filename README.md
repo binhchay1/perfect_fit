@@ -122,7 +122,7 @@ php artisan serve
 
 Once your application is running, you can access the interactive API documentation at:
 
-**🔗 http://localhost:8000/documentation**
+**🔗 http://localhost:8000/docs**
 
 The Swagger UI provides:
 - Interactive API testing
@@ -144,7 +144,7 @@ This API uses **Laravel Passport** for authentication:
 
 ### Testing Authentication in Swagger
 
-1. Go to `/documentation`
+1. Go to `/docs`
 2. Click the **Authorize** button (🔒)
 3. Enter: `Bearer your_access_token_here`
 4. Click **Authorize**

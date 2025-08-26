@@ -26,7 +26,7 @@ Route::get('/', function () {
 |
 */
 
-Route::get('/documentation', function () {
+Route::get('/docs', function () {
     return view('vendor.l5-swagger.index', [
         'documentation' => 'default',
         'urlToDocs' => route('l5-swagger.default.docs'),
