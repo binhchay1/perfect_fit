@@ -17,6 +17,14 @@ final class Utility
             return $status;
         }
     }
+    
+    public function saveLogoBrand($input)
+    {
+        if ($input) {
+            $status = Storage::disk('public-logo-brand')->put($input['logo']->getClientOriginalName(), $input['logo']->get());
+            return $status;
+        }
+    }
 
     public function paginate($items, $perPage = 15, $path = null, $pageName = 'page', $page = null, $options = [])
     {

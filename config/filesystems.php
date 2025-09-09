@@ -63,6 +63,14 @@ return [
             'visibility' => 'public',
             'throw' => false,
         ],
+    
+        'public-logo-brand' => [
+            'driver' => 'local',
+            'root' => public_path() . '/images/brand/logo',
+            'url' => env('APP_URL') . '/images/brand/logo',
+            'visibility' => 'public',
+            'throw' => false,
+        ],
 
     ],
 
