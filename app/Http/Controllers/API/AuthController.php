@@ -117,14 +117,13 @@ class AuthController extends Controller
 
             /** @var \App\Models\User $user */
             $user = Auth::user();
-
             // Check if user is active
             if ($user->status != 1) {
                 return $this->unauthorizedResponse('Account is not active');
             }
+    
 
             $tokenResult = $user->createToken('Perfect Fit API');
-
             return $this->successResponse([
                 'user' => [
                     'id' => $user->id,
