@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\BrandController;
 use App\Http\Controllers\API\UserController;
+use App\Http\Controllers\API\ProductController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,7 +18,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Authentication routes (Public)
-Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/login', [AuthController::class, 'login'])->name('login');
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::get('/auth/verify/{token}', [AuthController::class, 'verifyAccount']);
 Route::post('/auth/verify/resend', [AuthController::class, 'resendVerifyAccount']);
@@ -41,16 +42,36 @@ Route::middleware('auth:api')->group(function () {
 
 // Brand routes (Public)
 Route::get('/brands', [BrandController::class, 'index']);
-Route::get('/brands/with-products', [BrandController::class, 'getWithProducts']);
+Route::get('/brand/with-products', [BrandController::class, 'getWithProducts']);
 Route::get('/brands/search', [BrandController::class, 'search']);
-Route::get('/brands/{brand}', [BrandController::class, 'showBySlug']);
+Route::get('/brand/{brand}', [BrandController::class, 'showBySlug']);
 
 // Protected brand routes (Admin)
 Route::middleware('auth:api')->group(function () {
     Route::get('/admin/brands', [BrandController::class, 'getAll']);
-    Route::post('/admin/brands', [BrandController::class, 'store']);
-    Route::get('/admin/brands/{id}', [BrandController::class, 'show']);
-    Route::put('/admin/brands/{id}', [BrandController::class, 'update']);
-    Route::delete('/admin/brands/{id}', [BrandController::class, 'destroy']);
-    Route::patch('/admin/brands/{id}/toggle-status', [BrandController::class, 'toggleStatus']);
+    Route::post('/admin/brand', [BrandController::class, 'store']);
+    Route::get('/admin/brand/{id}', [BrandController::class, 'show']);
+    Route::post('/admin/brand/{id}', [BrandController::class, 'update']);
+    Route::delete('/admin/brand/{id}', [BrandController::class, 'destroy']);
+    Route::post('/admin/brand/{id}/toggle-status', [BrandController::class, 'toggleStatus']);
+    
+});
+
+// Product routes (Public)
+Route::get('/products', [ProductController::class, 'index']);
+Route::get('/product/featured', [ProductController::class, 'getFeatured']);
+Route::get('/products/search', [ProductController::class, 'search']);
+Route::get('/products/filters', [ProductController::class, 'getWithFilters']);
+Route::get('/product/brand/{brandId}', [ProductController::class, 'getByBrand']);
+Route::get('/product/gender/{gender}', [ProductController::class, 'getByGender']);
+Route::get('/product/{product}', [ProductController::class, 'showBySlug']);
+
+// Protected product routes (Admin)
+Route::middleware('auth:api')->group(function () {
+    Route::get('/admin/products', [ProductController::class, 'getAll']);
+    Route::post('/admin/product', [ProductController::class, 'store']);
+    Route::get('/admin/product/{id}', [ProductController::class, 'show']);
+    Route::post('/admin/product/{id}', [ProductController::class, 'update']);
+    Route::delete('/admin/product/{id}', [ProductController::class, 'destroy']);
+    Route::post('/admin/product/{id}/toggle-status', [ProductController::class, 'toggleStatus']);
 });
