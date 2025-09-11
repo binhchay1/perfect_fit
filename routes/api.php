@@ -6,6 +6,7 @@ use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\CartController;
 use App\Http\Controllers\API\WishlistController;
+use App\Http\Controllers\API\OrderController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -96,4 +97,13 @@ Route::middleware('auth:api')->group(function () {
     Route::delete('/wishlist', [WishlistController::class, 'clear']);
     Route::get('/wishlist/count', [WishlistController::class, 'count']);
     Route::post('/wishlist/check', [WishlistController::class, 'check']);
+});
+
+// Order routes (Protected - User must be logged in)
+Route::middleware('auth:api')->group(function () {
+    Route::get('/orders', [OrderController::class, 'index']);
+    Route::post('/order', [OrderController::class, 'store']);
+    Route::get('/orders/{id}', [OrderController::class, 'show']);
+    Route::put('/orders/{id}/cancel', [OrderController::class, 'cancel']);
+    Route::get('/orders/{id}/tracking', [OrderController::class, 'tracking']);
 });
