@@ -100,4 +100,20 @@ class User extends Authenticatable
     {
         return $this->hasMany(Order::class);
     }
+
+    /**
+     * Check if user is admin.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Check if user is regular user.
+     */
+    public function isUser(): bool
+    {
+        return $this->role === 'user' || $this->role === null;
+    }
 }

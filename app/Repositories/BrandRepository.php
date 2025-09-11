@@ -98,7 +98,7 @@ class BrandRepository extends BaseRepository
             ->get();
     }
 
- 
+
     public function getWithProducts($limit = null)
     {
         $query = $this->model
@@ -117,7 +117,7 @@ class BrandRepository extends BaseRepository
 
         return $query->get();
     }
-    
+
     public function toggleStatus($id)
     {
         $brand = $this->model->find($id);
