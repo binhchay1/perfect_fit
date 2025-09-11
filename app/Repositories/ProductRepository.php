@@ -36,6 +36,18 @@ class ProductRepository extends BaseRepository
             ->get();
     }
 
+
+
+    /**
+     * Get product by ID with all relationships for admin
+     */
+    public function getByIdWithAllRelations($id)
+    {
+        return $this->model
+            ->with(['brand', 'productColors', 'productSizes', 'productTags'])
+            ->find($id);
+    }
+
     /**
      * Create a new product
      */

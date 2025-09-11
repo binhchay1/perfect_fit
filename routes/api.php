@@ -7,6 +7,8 @@ use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\CartController;
 use App\Http\Controllers\API\WishlistController;
 use App\Http\Controllers\API\OrderController;
+use App\Http\Controllers\API\Admin\BrandController as AdminBrandController;
+use App\Http\Controllers\API\Admin\ProductController as AdminProductController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -49,16 +51,6 @@ Route::get('/brand/with-products', [BrandController::class, 'getWithProducts']);
 Route::get('/brands/search', [BrandController::class, 'search']);
 Route::get('/brand/{brand}', [BrandController::class, 'showBySlug']);
 
-// Protected brand routes (Admin)
-Route::middleware('auth:api')->group(function () {
-    Route::get('/admin/brands', [BrandController::class, 'getAll']);
-    Route::post('/admin/brand', [BrandController::class, 'store']);
-    Route::get('/admin/brand/{id}', [BrandController::class, 'show']);
-    Route::post('/admin/brand/{id}', [BrandController::class, 'update']);
-    Route::delete('/admin/brand/{id}', [BrandController::class, 'destroy']);
-    Route::post('/admin/brand/{id}/toggle-status', [BrandController::class, 'toggleStatus']);
-});
-
 // Product routes (Public)
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/product/featured', [ProductController::class, 'getFeatured']);
@@ -68,14 +60,23 @@ Route::get('/product/brand/{brandId}', [ProductController::class, 'getByBrand'])
 Route::get('/product/gender/{gender}', [ProductController::class, 'getByGender']);
 Route::get('/product/{product}', [ProductController::class, 'showBySlug']);
 
-// Protected product routes (Admin)
-Route::middleware('auth:api')->group(function () {
-    Route::get('/admin/products', [ProductController::class, 'getAll']);
-    Route::post('/admin/product', [ProductController::class, 'store']);
-    Route::get('/admin/product/{id}', [ProductController::class, 'show']);
-    Route::post('/admin/product/{id}', [ProductController::class, 'update']);
-    Route::delete('/admin/product/{id}', [ProductController::class, 'destroy']);
-    Route::post('/admin/product/{id}/toggle-status', [ProductController::class, 'toggleStatus']);
+// Admin routes (Admin only)
+Route::prefix('admin')->middleware(['auth:api', 'admin'])->group(function () {
+    // Brand management
+    Route::get('/brands', [AdminBrandController::class, 'getAll']);
+    Route::post('/brand', [AdminBrandController::class, 'store']);
+    Route::get('/brand/{id}', [AdminBrandController::class, 'show']);
+    Route::post('/brand/{id}', [AdminBrandController::class, 'update']);
+    Route::delete('/brand/{id}', [AdminBrandController::class, 'destroy']);
+    Route::post('/brand/{id}/toggle-status', [AdminBrandController::class, 'toggleStatus']);
+
+    // Product management
+    Route::get('/products', [AdminProductController::class, 'getAll']);
+    Route::post('/product', [AdminProductController::class, 'store']);
+    Route::get('/product/{id}', [AdminProductController::class, 'show']);
+    Route::post('/product/{id}', [AdminProductController::class, 'update']);
+    Route::delete('/product/{id}', [AdminProductController::class, 'destroy']);
+    Route::post('/product/{id}/toggle-status', [AdminProductController::class, 'toggleStatus']);
 });
 
 // Cart routes (Protected - User must be logged in)
