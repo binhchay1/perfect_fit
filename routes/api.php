@@ -4,6 +4,7 @@ use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\BrandController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\ProductController;
+use App\Http\Controllers\API\CartController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -54,7 +55,6 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/admin/brand/{id}', [BrandController::class, 'update']);
     Route::delete('/admin/brand/{id}', [BrandController::class, 'destroy']);
     Route::post('/admin/brand/{id}/toggle-status', [BrandController::class, 'toggleStatus']);
-    
 });
 
 // Product routes (Public)
@@ -74,4 +74,14 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/admin/product/{id}', [ProductController::class, 'update']);
     Route::delete('/admin/product/{id}', [ProductController::class, 'destroy']);
     Route::post('/admin/product/{id}/toggle-status', [ProductController::class, 'toggleStatus']);
+});
+
+// Cart routes (Protected - User must be logged in)
+Route::middleware('auth:api')->group(function () {
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart', [CartController::class, 'store']);
+    Route::put('/cart/{id}', [CartController::class, 'update']);
+    Route::delete('/cart/{id}', [CartController::class, 'destroy']);
+    Route::delete('/cart', [CartController::class, 'clear']);
+    Route::get('/cart/summary', [CartController::class, 'summary']);
 });

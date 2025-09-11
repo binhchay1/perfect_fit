@@ -76,4 +76,12 @@ class User extends Authenticatable
             ->latest()
             ->first();
     }
+
+    /**
+     * Get the cart for the user.
+     */
+    public function cart()
+    {
+        return $this->hasOne(Cart::class);
+    }
 }

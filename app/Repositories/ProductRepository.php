@@ -190,4 +190,68 @@ class ProductRepository extends BaseRepository
 
         return null;
     }
+
+    /**
+     * Get product by ID for cart operations
+     */
+    public function getForCart($id)
+    {
+        return $this->model
+            ->where('id', $id)
+            ->where('is_active', true)
+            ->first();
+    }
+
+    /**
+     * Check if product is active
+     */
+    public function isActive($id): bool
+    {
+        return $this->model
+            ->where('id', $id)
+            ->where('is_active', true)
+            ->exists();
+    }
+
+    /**
+     * Validate product for cart operations
+     */
+    public function validateForCart($productId, $productColorId, $productSizeId): array
+    {
+        $product = $this->getForCart($productId);
+
+        if (!$product) {
+            return [
+                'valid' => false,
+                'error' => 'Product is not available'
+            ];
+        }
+
+        // Check if color belongs to product
+        if ($product->colors()->where('id', $productColorId)->doesntExist()) {
+            return [
+                'valid' => false,
+                'error' => 'Invalid color for this product'
+            ];
+        }
+
+        // Check if size belongs to color
+        if ($product->colors()
+            ->where('id', $productColorId)
+            ->whereHas('sizes', function ($query) use ($productSizeId) {
+                $query->where('id', $productSizeId);
+            })
+            ->doesntExist()
+        ) {
+            return [
+                'valid' => false,
+                'error' => 'Invalid size for this color'
+            ];
+        }
+
+        return [
+            'valid' => true,
+            'product' => $product
+        ];
+    }
 }
