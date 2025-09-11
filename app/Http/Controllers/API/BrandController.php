@@ -35,7 +35,8 @@ class BrandController extends Controller
     {
         try {
             $brands = $this->brandRepository->index();
-            return $this->successResponse($brands, 'Brands retrieved successfully');
+            $listBrands = $this->utility->paginate($brands, 15);
+            return $this->successResponse($listBrands, 'Brands retrieved successfully');
         } catch (\Exception $e) {
             return $this->serverErrorResponse('Failed to retrieve brands', $e->getMessage());
         }
@@ -48,7 +49,8 @@ class BrandController extends Controller
     {
         try {
             $brands = $this->brandRepository->getAll();
-            return $this->successResponse($brands, 'All brands retrieved successfully');
+            $listBrands = $this->utility->paginate($brands, 15);
+            return $this->successResponse($listBrands, 'All brands retrieved successfully');
         } catch (\Exception $e) {
             return $this->serverErrorResponse('Failed to retrieve all brands', $e->getMessage());
         }

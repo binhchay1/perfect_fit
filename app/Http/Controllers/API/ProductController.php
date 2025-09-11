@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\Utility;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProductRequest;
 use App\Repositories\ProductRepository;
@@ -16,10 +17,15 @@ class ProductController extends Controller
     use ApiResponseTrait;
 
     private $productRepository;
+    protected $utility;
 
-    public function __construct(ProductRepository $productRepository)
+    public function __construct(
+        ProductRepository $productRepository,
+        Utility $utility
+    )
     {
         $this->productRepository = $productRepository;
+        $this->utility = $utility;
     }
 
     /**
@@ -57,7 +63,9 @@ class ProductController extends Controller
     {
         try {
             $products = $this->productRepository->index();
-            return $this->successResponse($products, 'Products retrieved successfully');
+            $listProducts = $this->utility->paginate($products, 15);
+    
+            return $this->successResponse($listProducts, 'Products retrieved successfully');
         } catch (\Exception $e) {
             return $this->serverErrorResponse('Failed to retrieve products', $e->getMessage());
         }
@@ -70,7 +78,8 @@ class ProductController extends Controller
     {
         try {
             $products = $this->productRepository->getAll();
-            return $this->successResponse($products, 'All products retrieved successfully');
+            $listProducts = $this->utility->paginate($products, 15);
+            return $this->successResponse($listProducts, 'All products retrieved successfully');
         } catch (\Exception $e) {
             return $this->serverErrorResponse('Failed to retrieve all products', $e->getMessage());
         }
