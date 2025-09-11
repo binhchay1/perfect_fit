@@ -5,6 +5,7 @@ use App\Http\Controllers\API\BrandController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\CartController;
+use App\Http\Controllers\API\WishlistController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -84,4 +85,15 @@ Route::middleware('auth:api')->group(function () {
     Route::delete('/cart/{id}', [CartController::class, 'destroy']);
     Route::delete('/cart', [CartController::class, 'clear']);
     Route::get('/cart/summary', [CartController::class, 'summary']);
+});
+
+// Wishlist routes (Protected - User must be logged in)
+Route::middleware('auth:api')->group(function () {
+    Route::get('/wishlist', [WishlistController::class, 'index']);
+    Route::post('/wishlist', [WishlistController::class, 'store']);
+    Route::delete('/wishlist/{id}', [WishlistController::class, 'destroy']);
+    Route::post('/wishlist/remove-by-product', [WishlistController::class, 'removeByProduct']);
+    Route::delete('/wishlist', [WishlistController::class, 'clear']);
+    Route::get('/wishlist/count', [WishlistController::class, 'count']);
+    Route::post('/wishlist/check', [WishlistController::class, 'check']);
 });
