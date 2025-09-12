@@ -266,4 +266,12 @@ class ProductRepository extends BaseRepository
             'product' => $product
         ];
     }
+
+    /**
+     * Check if product has existing orders
+     */
+    public function hasOrders($productId): bool
+    {
+        return \App\Models\OrderItem::where('product_id', $productId)->exists();
+    }
 }

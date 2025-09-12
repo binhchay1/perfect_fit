@@ -300,6 +300,119 @@ class OrderRepository extends BaseRepository
     }
 
     /**
+     * Get revenue by specific date
+     */
+    public function getRevenueByDate($date)
+    {
+        return $this->model
+            ->whereDate('created_at', $date)
+            ->where('status', '!=', 'cancelled')
+            ->sum('total_amount');
+    }
+
+    /**
+     * Get orders count by specific date
+     */
+    public function getOrdersByDate($date)
+    {
+        return $this->model
+            ->whereDate('created_at', $date)
+            ->count();
+    }
+
+    /**
+     * Get revenue by date range
+     */
+    public function getRevenueByDateRange($startDate, $endDate)
+    {
+        return $this->model
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', '!=', 'cancelled')
+            ->sum('total_amount');
+    }
+
+    /**
+     * Get orders count by date range
+     */
+    public function getOrdersByDateRange($startDate, $endDate)
+    {
+        return $this->model
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+    }
+
+    /**
+     * Get top selling products
+     */
+    public function getTopSellingProducts($limit = 10)
+    {
+        return \App\Models\OrderItem::selectRaw('
+                product_id,
+                product_name,
+                SUM(quantity) as total_sold,
+                SUM(total_price) as total_revenue,
+                AVG(unit_price) as average_price
+            ')
+            ->groupBy('product_id', 'product_name')
+            ->orderBy('total_sold', 'desc')
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
+     * Get brand performance
+     */
+    public function getBrandPerformance()
+    {
+        return \App\Models\OrderItem::join('products', 'order_items.product_id', '=', 'products.id')
+            ->join('brands', 'products.brand_id', '=', 'brands.id')
+            ->selectRaw('
+                brands.id,
+                brands.name,
+                COUNT(DISTINCT order_items.order_id) as total_orders,
+                SUM(order_items.quantity) as total_quantity,
+                SUM(order_items.total_price) as total_revenue
+            ')
+            ->groupBy('brands.id', 'brands.name')
+            ->orderBy('total_revenue', 'desc')
+            ->get();
+    }
+
+    /**
+     * Get purchased products for a user
+     */
+    public function getPurchasedProducts($userId, $perPage = 15, $status = 'delivered')
+    {
+        return \App\Models\OrderItem::whereHas('order', function ($query) use ($userId, $status) {
+            $query->where('user_id', $userId)
+                ->where('status', $status);
+        })
+            ->with([
+                'product:id,name,slug,images,price',
+                'productColor:id,color_name',
+                'productSize:id,size_name',
+                'order:id,order_number,status,created_at'
+            ])
+            ->select([
+                'id',
+                'product_id',
+                'product_color_id',
+                'product_size_id',
+                'product_name',
+                'product_sku',
+                'color_name',
+                'size_name',
+                'quantity',
+                'unit_price',
+                'total_price',
+                'order_id',
+                'created_at'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+    }
+
+    /**
      * Restore stock when order is cancelled
      */
     private function restoreStock($order)
