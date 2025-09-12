@@ -9,6 +9,7 @@ use App\Http\Controllers\API\WishlistController;
 use App\Http\Controllers\API\OrderController;
 use App\Http\Controllers\API\Admin\BrandController as AdminBrandController;
 use App\Http\Controllers\API\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\API\Admin\UserController as AdminUserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -62,6 +63,14 @@ Route::get('/product/{product}', [ProductController::class, 'showBySlug']);
 
 // Admin routes (Admin only)
 Route::prefix('admin')->middleware(['auth:api', 'admin'])->group(function () {
+    // User management
+    Route::get('/users', [AdminUserController::class, 'getAll']);
+    Route::get('/users/statistics', [AdminUserController::class, 'statistics']);
+    Route::get('/user/{id}', [AdminUserController::class, 'show']);
+    Route::post('/user/{id}', [AdminUserController::class, 'update']);
+    Route::delete('/user/{id}', [AdminUserController::class, 'destroy']);
+    Route::post('/user/{id}/toggle-status', [AdminUserController::class, 'toggleStatus']);
+
     // Brand management
     Route::get('/brands', [AdminBrandController::class, 'getAll']);
     Route::post('/brand', [AdminBrandController::class, 'store']);
