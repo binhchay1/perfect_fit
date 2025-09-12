@@ -226,6 +226,24 @@ class OrderController extends Controller
     }
 
     /**
+     * Get purchased products for the authenticated user
+     */
+    public function purchasedProducts(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            $perPage = $request->input('per_page', 15);
+            $status = $request->input('status', 'delivered'); // Default to delivered orders
+
+            $purchasedProducts = $this->orderRepository->getPurchasedProducts($user->id, $perPage, $status);
+
+            return $this->successResponse($purchasedProducts, 'Purchased products retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to retrieve purchased products', 500);
+        }
+    }
+
+    /**
      * Generate unique order number
      */
     private function generateOrderNumber()

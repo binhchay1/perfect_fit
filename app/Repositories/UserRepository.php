@@ -87,4 +87,28 @@ class UserRepository extends BaseRepository
             'unverified_users' => $this->model->whereNull('email_verified_at')->count(),
         ];
     }
+
+    /**
+     * Get new customers count
+     */
+    public function getNewCustomersCount()
+    {
+        return $this->model
+            ->where('role', 'user')
+            ->whereDate('created_at', '>=', now()->subDays(30))
+            ->count();
+    }
+
+    /**
+     * Get returning customers count
+     */
+    public function getReturningCustomersCount()
+    {
+        return $this->model
+            ->where('role', 'user')
+            ->whereHas('orders', function ($query) {
+                $query->where('created_at', '>=', now()->subDays(30));
+            })
+            ->count();
+    }
 }

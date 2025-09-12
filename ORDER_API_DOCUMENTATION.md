@@ -584,3 +584,191 @@ Hệ thống Order Management có thể được mở rộng với:
 6.  **Return/Refund**: Hệ thống trả hàng và hoàn tiền
 7.  **Multi-currency**: Hỗ trợ nhiều loại tiền
 8.  **International Shipping**: Giao hàng quốc tế
+
+---
+
+## 📦 Purchased Products API
+
+### Tổng quan
+
+API để lấy danh sách sản phẩm đã mua của user (giống như lịch sử mua hàng trên Shopee).
+
+### 5. Lấy danh sách sản phẩm đã mua
+
+```http
+GET /api/purchased-products
+Authorization: Bearer {access_token}
+```
+
+#### Parameters
+
+| Parameter  | Type    | Default   | Description                                    |
+| ---------- | ------- | --------- | ---------------------------------------------- |
+| `per_page` | integer | 15        | Số lượng items per page                        |
+| `status`   | string  | delivered | Trạng thái đơn hàng (delivered, shipped, etc.) |
+
+#### Example Request
+
+```http
+GET /api/purchased-products?per_page=10&status=delivered
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...
+```
+
+#### Example Response
+
+```json
+{
+    "success": true,
+    "message": "Purchased products retrieved successfully",
+    "data": {
+        "current_page": 1,
+        "data": [
+            {
+                "id": 1,
+                "product_id": 5,
+                "product_color_id": 1,
+                "product_size_id": 1,
+                "product_name": "Nike Air Max",
+                "product_sku": "NIK-NIKE-5-DEN-S",
+                "color_name": "Den",
+                "size_name": "S",
+                "quantity": 1,
+                "unit_price": 299.99,
+                "total_price": 299.99,
+                "order_id": 3,
+                "created_at": "2025-01-01T09:00:00.000000Z",
+                "product": {
+                    "id": 5,
+                    "name": "Nike Air Max",
+                    "slug": "nike-air-max",
+                    "images": "[\"nike-air-max-1.jpg\", \"nike-air-max-2.jpg\"]",
+                    "price": 299.99
+                },
+                "product_color": {
+                    "id": 1,
+                    "color_name": "Den"
+                },
+                "product_size": {
+                    "id": 1,
+                    "size_name": "S"
+                },
+                "order": {
+                    "id": 3,
+                    "order_number": "ORD-20250101-ABC123",
+                    "status": "delivered",
+                    "created_at": "2025-01-01T09:00:00.000000Z"
+                }
+            }
+        ],
+        "first_page_url": "http://localhost:8000/api/purchased-products?page=1",
+        "from": 1,
+        "last_page": 1,
+        "last_page_url": "http://localhost:8000/api/purchased-products?page=1",
+        "links": [
+            {
+                "url": null,
+                "label": "&laquo; Previous",
+                "active": false
+            },
+            {
+                "url": "http://localhost:8000/api/purchased-products?page=1",
+                "label": "1",
+                "active": true
+            },
+            {
+                "url": null,
+                "label": "Next &raquo;",
+                "active": false
+            }
+        ],
+        "next_page_url": null,
+        "path": "http://localhost:8000/api/purchased-products",
+        "per_page": 15,
+        "prev_page_url": null,
+        "to": 1,
+        "total": 1
+    }
+}
+```
+
+#### Response Fields
+
+##### Order Item Fields
+
+| Field              | Type     | Description               |
+| ------------------ | -------- | ------------------------- |
+| `id`               | integer  | Order item ID             |
+| `product_id`       | integer  | Product ID                |
+| `product_color_id` | integer  | Product color ID          |
+| `product_size_id`  | integer  | Product size ID           |
+| `product_name`     | string   | Product name (snapshot)   |
+| `product_sku`      | string   | Product SKU               |
+| `color_name`       | string   | Color name                |
+| `size_name`        | string   | Size name                 |
+| `quantity`         | integer  | Quantity purchased        |
+| `unit_price`       | decimal  | Price per unit            |
+| `total_price`      | decimal  | Total price for this item |
+| `order_id`         | integer  | Order ID                  |
+| `created_at`       | datetime | Purchase date             |
+
+##### Related Data
+
+| Field           | Type   | Description                                          |
+| --------------- | ------ | ---------------------------------------------------- |
+| `product`       | object | Product details (id, name, slug, images, price)      |
+| `product_color` | object | Color details (id, color_name)                       |
+| `product_size`  | object | Size details (id, size_name)                         |
+| `order`         | object | Order details (id, order_number, status, created_at) |
+
+#### Use Cases
+
+##### 1. View Purchase History
+
+```javascript
+// Frontend: Display user's purchased products
+const response = await fetch("/api/purchased-products", {
+    headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+    },
+});
+const data = await response.json();
+```
+
+##### 2. Reorder Products
+
+```javascript
+// Frontend: Add product to cart for reorder
+const reorderProduct = async (productId, colorId, sizeId, quantity) => {
+    await fetch("/api/cart", {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            product_id: productId,
+            product_color_id: colorId,
+            product_size_id: sizeId,
+            quantity: quantity,
+        }),
+    });
+};
+```
+
+##### 3. Filter by Status
+
+```javascript
+// Get only delivered products
+const deliveredProducts = await fetch(
+    "/api/purchased-products?status=delivered"
+);
+```
+
+#### Notes
+
+1. **Default Status**: Only shows `delivered` orders by default
+2. **Pagination**: Supports Laravel pagination
+3. **Relationships**: Includes product, color, size, and order data
+4. **Security**: Users can only see their own purchased products
+5. **Performance**: Optimized queries with select specific fields

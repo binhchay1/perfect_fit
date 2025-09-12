@@ -286,4 +286,73 @@ class ProductController extends Controller
             return $this->serverErrorResponse('Failed to update product status', $e->getMessage());
         }
     }
+
+    /**
+     * Bulk delete multiple products
+     */
+    public function bulkDelete(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'product_ids' => 'required|array|min:1',
+                'product_ids.*' => 'integer|exists:products,id'
+            ]);
+
+            $productIds = $validated['product_ids'];
+            $deletedCount = 0;
+            $failedIds = [];
+
+            DB::beginTransaction();
+
+            foreach ($productIds as $productId) {
+                try {
+                    $product = $this->productRepository->find($productId);
+                    if ($product) {
+                        // Check if product has orders
+                        $hasOrders = $this->productRepository->hasOrders($productId);
+                        if ($hasOrders) {
+                            $failedIds[] = [
+                                'id' => $productId,
+                                'name' => $product->name,
+                                'reason' => 'Product has existing orders'
+                            ];
+                            continue;
+                        }
+
+                        // Delete product (soft delete)
+                        $this->productRepository->delete($productId);
+                        $deletedCount++;
+                    }
+                } catch (\Exception $e) {
+                    $failedIds[] = [
+                        'id' => $productId,
+                        'reason' => 'Failed to delete: ' . $e->getMessage()
+                    ];
+                }
+            }
+
+            DB::commit();
+
+            $response = [
+                'deleted_count' => $deletedCount,
+                'total_requested' => count($productIds),
+                'failed_deletions' => $failedIds
+            ];
+
+            if ($deletedCount > 0) {
+                $message = "Successfully deleted {$deletedCount} product(s)";
+                if (count($failedIds) > 0) {
+                    $message .= ", {$failedIds} failed";
+                }
+                return $this->successResponse($response, $message);
+            } else {
+                return $this->errorResponse('No products were deleted', 400, $response);
+            }
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            return $this->errorResponse('Validation error', 422, $ve->errors());
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->serverErrorResponse('Failed to bulk delete products', $e->getMessage());
+        }
+    }
 }

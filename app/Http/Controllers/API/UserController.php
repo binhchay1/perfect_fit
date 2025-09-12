@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Enums\Users;
 use App\Enums\Utility;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UserRequest;
@@ -12,11 +11,9 @@ use App\Repositories\PublisherResourceRepository;
 use App\Repositories\UserRepository;
 use App\Traits\ApiResponseTrait;
 use Carbon\Carbon;
-use Illuminate\Http\File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 

@@ -11,6 +11,7 @@ use App\Http\Controllers\API\Admin\BrandController as AdminBrandController;
 use App\Http\Controllers\API\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\API\Admin\UserController as AdminUserController;
 use App\Http\Controllers\API\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\API\Admin\DashboardController as AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -64,6 +65,14 @@ Route::get('/product/{product}', [ProductController::class, 'showBySlug']);
 
 // Admin routes (Admin only)
 Route::prefix('admin')->middleware(['auth:api', 'admin'])->group(function () {
+    // Dashboard & Analytics
+    Route::get('/dashboard/overview', [AdminDashboardController::class, 'overview']);
+    Route::get('/dashboard/revenue-analytics', [AdminDashboardController::class, 'revenueAnalytics']);
+    Route::get('/dashboard/order-analytics', [AdminDashboardController::class, 'orderAnalytics']);
+    Route::get('/dashboard/top-products', [AdminDashboardController::class, 'topProducts']);
+    Route::get('/dashboard/customer-analytics', [AdminDashboardController::class, 'customerAnalytics']);
+    Route::get('/dashboard/brand-analytics', [AdminDashboardController::class, 'brandAnalytics']);
+
     // User management
     Route::get('/users', [AdminUserController::class, 'getAll']);
     Route::get('/users/statistics', [AdminUserController::class, 'statistics']);
@@ -96,6 +105,7 @@ Route::prefix('admin')->middleware(['auth:api', 'admin'])->group(function () {
     Route::post('/product/{id}', [AdminProductController::class, 'update']);
     Route::delete('/product/{id}', [AdminProductController::class, 'destroy']);
     Route::post('/product/{id}/toggle-status', [AdminProductController::class, 'toggleStatus']);
+    Route::delete('/products/bulk-delete', [AdminProductController::class, 'bulkDelete']);
 });
 
 // Cart routes (Protected - User must be logged in)
@@ -126,4 +136,5 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/orders/{id}', [OrderController::class, 'show']);
     Route::put('/orders/{id}/cancel', [OrderController::class, 'cancel']);
     Route::get('/orders/{id}/tracking', [OrderController::class, 'tracking']);
+    Route::get('/purchased-products', [OrderController::class, 'purchasedProducts']);
 });
