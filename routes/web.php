@@ -17,6 +17,12 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Payment test page
+Route::get('/payment/test', function () {
+    $token = 'YOUR_TEST_TOKEN'; // You can change this to a real token
+    return view('payment.test', compact('token'));
+});
+
 /*
 |--------------------------------------------------------------------------
 | Swagger Documentation Routes

@@ -12,6 +12,7 @@ use App\Http\Controllers\API\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\API\Admin\UserController as AdminUserController;
 use App\Http\Controllers\API\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\API\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\API\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -138,3 +139,12 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/orders/{id}/tracking', [OrderController::class, 'tracking']);
     Route::get('/purchased-products', [OrderController::class, 'purchasedProducts']);
 });
+
+// Payment routes
+Route::middleware('auth:api')->group(function () {
+    Route::post('/payment/vnpay/create', [PaymentController::class, 'createVnpayPayment']);
+    Route::get('/payment/status', [PaymentController::class, 'getPaymentStatus']);
+});
+
+// Payment callback routes (Public - VNPay will call these)
+Route::get('/payment/vnpay/callback', [PaymentController::class, 'vnpayCallback']);
