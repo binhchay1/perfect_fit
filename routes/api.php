@@ -10,6 +10,7 @@ use App\Http\Controllers\API\OrderController;
 use App\Http\Controllers\API\Admin\BrandController as AdminBrandController;
 use App\Http\Controllers\API\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\API\Admin\UserController as AdminUserController;
+use App\Http\Controllers\API\Admin\OrderController as AdminOrderController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -70,6 +71,15 @@ Route::prefix('admin')->middleware(['auth:api', 'admin'])->group(function () {
     Route::post('/user/{id}', [AdminUserController::class, 'update']);
     Route::delete('/user/{id}', [AdminUserController::class, 'destroy']);
     Route::post('/user/{id}/toggle-status', [AdminUserController::class, 'toggleStatus']);
+
+    // Order management
+    Route::get('/orders', [AdminOrderController::class, 'index']);
+    Route::get('/orders/statistics', [AdminOrderController::class, 'statistics']);
+    Route::get('/order/{id}', [AdminOrderController::class, 'show']);
+    Route::put('/order/{id}/status', [AdminOrderController::class, 'updateStatus']);
+    Route::put('/order/{id}/tracking', [AdminOrderController::class, 'updateTracking']);
+    Route::post('/order/{id}/cancel', [AdminOrderController::class, 'cancel']);
+    Route::post('/order/{id}/refund', [AdminOrderController::class, 'refund']);
 
     // Brand management
     Route::get('/brands', [AdminBrandController::class, 'getAll']);

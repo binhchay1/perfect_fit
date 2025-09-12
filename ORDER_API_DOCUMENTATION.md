@@ -479,10 +479,10 @@ PENDING → PAID → FAILED → REFUNDED
 
 ### Stock Management Integration
 
--   **Khi tạo order**: Reserve stock (tạm khóa)
--   **Khi confirm order**: Deduct stock (trừ thực tế)
+-   **Khi tạo order**: Kiểm tra stock → Trừ stock ngay lập tức
 -   **Khi cancel order**: Restore stock (hoàn trả)
 -   **Khi refund**: Restore stock (hoàn trả)
+-   **Stock validation**: Kiểm tra đủ hàng trước khi tạo order
 
 ## Tính năng bảo mật
 

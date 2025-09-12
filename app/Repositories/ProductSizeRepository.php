@@ -71,4 +71,32 @@ class ProductSizeRepository extends BaseRepository
             ->where('product_color_id', $colorId)
             ->first();
     }
+
+    /**
+     * Deduct stock quantity
+     */
+    public function deductStock($sizeId, $quantity): bool
+    {
+        $size = $this->model->find($sizeId);
+        if (!$size || $size->quantity < $quantity) {
+            return false;
+        }
+
+        $size->quantity -= $quantity;
+        return $size->save();
+    }
+
+    /**
+     * Add stock quantity (for restocking)
+     */
+    public function addStock($sizeId, $quantity): bool
+    {
+        $size = $this->model->find($sizeId);
+        if (!$size) {
+            return false;
+        }
+
+        $size->quantity += $quantity;
+        return $size->save();
+    }
 }
