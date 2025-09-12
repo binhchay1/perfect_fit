@@ -93,7 +93,7 @@ class OrderController extends Controller
             // Create order
             $order = $this->orderRepository->createOrder($orderData);
 
-            // Create order items from cart items and deduct stock
+            // Create order items from cart items (DO NOT deduct stock yet)
             foreach ($cart->cartItems as $cartItem) {
                 // Check stock availability before creating order item
                 if (!$this->productSizeRepository->hasStock($cartItem->product_size_id, $cartItem->quantity)) {
@@ -118,8 +118,8 @@ class OrderController extends Controller
                     'total_price' => $cartItem->quantity * $cartItem->price
                 ]);
 
-                // Deduct stock from product_size
-                $this->productSizeRepository->deductStock($cartItem->product_size_id, $cartItem->quantity);
+                // NOTE: Stock will be deducted only when payment is successful
+                // This is handled in PaymentController@vnpayCallback
             }
 
             // Load relationships
