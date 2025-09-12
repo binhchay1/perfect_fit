@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreOrderRequest;
 use App\Repositories\OrderRepository;
 use App\Repositories\OrderItemRepository;
+use App\Repositories\ProductSizeRepository;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,13 +17,16 @@ class OrderController extends Controller
 
     protected $orderRepository;
     protected $orderItemRepository;
+    protected $productSizeRepository;
 
     public function __construct(
         OrderRepository $orderRepository,
-        OrderItemRepository $orderItemRepository
+        OrderItemRepository $orderItemRepository,
+        ProductSizeRepository $productSizeRepository
     ) {
         $this->orderRepository = $orderRepository;
         $this->orderItemRepository = $orderItemRepository;
+        $this->productSizeRepository = $productSizeRepository;
     }
 
     /**
@@ -89,8 +93,18 @@ class OrderController extends Controller
             // Create order
             $order = $this->orderRepository->createOrder($orderData);
 
-            // Create order items from cart items
+            // Create order items from cart items and deduct stock
             foreach ($cart->cartItems as $cartItem) {
+                // Check stock availability before creating order item
+                if (!$this->productSizeRepository->hasStock($cartItem->product_size_id, $cartItem->quantity)) {
+                    $availableStock = $this->productSizeRepository->getAvailableStock($cartItem->product_size_id);
+                    return $this->errorResponse(
+                        "Insufficient stock for product: {$cartItem->product->name}. Available: {$availableStock}, Required: {$cartItem->quantity}",
+                        400
+                    );
+                }
+
+                // Create order item
                 $order->orderItems()->create([
                     'product_id' => $cartItem->product_id,
                     'product_color_id' => $cartItem->product_color_id,
@@ -103,6 +117,9 @@ class OrderController extends Controller
                     'unit_price' => $cartItem->price,
                     'total_price' => $cartItem->quantity * $cartItem->price
                 ]);
+
+                // Deduct stock from product_size
+                $this->productSizeRepository->deductStock($cartItem->product_size_id, $cartItem->quantity);
             }
 
             // Load relationships
@@ -143,7 +160,7 @@ class OrderController extends Controller
     {
         try {
             $user = Auth::user();
-            $order = $this->orderRepository->cancelOrder($id, $user->id);
+            $order = $this->orderRepository->cancelOrderForUser($id, $user->id);
 
             if (!$order) {
                 return $this->errorResponse('Order cannot be cancelled or not found', 400);

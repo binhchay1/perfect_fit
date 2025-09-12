@@ -68,15 +68,11 @@ class OrderRepository extends BaseRepository
     }
 
     /**
-     * Update order status
+     * Update order status (user version)
      */
-    public function updateStatus($orderId, $status, $userId = null)
+    public function updateStatusForUser($orderId, $status, $userId)
     {
-        $query = $this->model->where('id', $orderId);
-
-        if ($userId) {
-            $query->where('user_id', $userId);
-        }
+        $query = $this->model->where('id', $orderId)->where('user_id', $userId);
 
         $order = $query->first();
         if (!$order) {
@@ -96,9 +92,9 @@ class OrderRepository extends BaseRepository
     }
 
     /**
-     * Cancel order
+     * Cancel order (user version)
      */
-    public function cancelOrder($orderId, $userId)
+    public function cancelOrderForUser($orderId, $userId)
     {
         $order = $this->getByIdForUser($orderId, $userId);
 
@@ -113,26 +109,6 @@ class OrderRepository extends BaseRepository
         $this->restoreStock($order);
 
         return $order;
-    }
-
-    /**
-     * Get order statistics
-     */
-    public function getStatistics($dateRange = null)
-    {
-        $query = $this->model->query();
-
-        if ($dateRange) {
-            $query->whereBetween('created_at', $dateRange);
-        }
-
-        return [
-            'total_orders' => $query->count(),
-            'total_revenue' => $query->sum('total_amount'),
-            'pending_orders' => $query->where('status', 'pending')->count(),
-            'completed_orders' => $query->where('status', 'delivered')->count(),
-            'cancelled_orders' => $query->where('status', 'cancelled')->count(),
-        ];
     }
 
     /**
@@ -159,6 +135,169 @@ class OrderRepository extends BaseRepository
             ->paginate($perPage);
     }
 
+
+    /**
+     * Get all orders for admin with filtering
+     */
+    public function getAllForAdmin($request)
+    {
+        $query = $this->model->with(['user', 'orderItems.product', 'orderItems.productColor', 'orderItems.productSize']);
+
+        // Filter by status
+        if ($request->has('status') && $request->status) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by payment_status
+        if ($request->has('payment_status') && $request->payment_status) {
+            $query->where('payment_status', $request->payment_status);
+        }
+
+        // Filter by date range
+        if ($request->has('date_from') && $request->date_from) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->has('date_to') && $request->date_to) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        // Search by order number or customer info
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('order_number', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // Sort
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortOrder = $request->get('sort_order', 'desc');
+        $query->orderBy($sortBy, $sortOrder);
+
+        return $query->paginate($request->get('per_page', 15));
+    }
+
+    /**
+     * Get order by ID with all relations for admin
+     */
+    public function getByIdWithAllRelations($id)
+    {
+        return $this->model
+            ->with(['user', 'orderItems.product', 'orderItems.productColor', 'orderItems.productSize'])
+            ->find($id);
+    }
+
+    /**
+     * Update order status (admin version)
+     */
+    public function updateStatus($orderId, $status, $notes = null)
+    {
+        $order = $this->model->find($orderId);
+        if (!$order) {
+            return false;
+        }
+
+        $order->status = $status;
+        if ($notes) {
+            $order->notes = $notes;
+        }
+
+        // Set timestamps for specific statuses
+        if ($status === 'shipped' && !$order->shipped_at) {
+            $order->shipped_at = now();
+        } elseif ($status === 'delivered' && !$order->delivered_at) {
+            $order->delivered_at = now();
+        }
+
+        return $order->save();
+    }
+
+    /**
+     * Update tracking information
+     */
+    public function updateTracking($orderId, $trackingData)
+    {
+        $order = $this->model->find($orderId);
+        if (!$order) {
+            return false;
+        }
+
+        $order->tracking_number = $trackingData['tracking_number'];
+        if (isset($trackingData['shipping_method'])) {
+            $order->shipping_method = $trackingData['shipping_method'];
+        }
+        if (isset($trackingData['estimated_delivery'])) {
+            $order->estimated_delivery = $trackingData['estimated_delivery'];
+        }
+
+        return $order->save();
+    }
+
+    /**
+     * Cancel order (admin version)
+     */
+    public function cancelOrder($orderId, $reason)
+    {
+        $order = $this->model->find($orderId);
+        if (!$order || !$order->canBeCancelled()) {
+            return false;
+        }
+
+        $order->status = 'cancelled';
+        $order->notes = $reason;
+        $order->save();
+
+        // Restore stock
+        $this->restoreStock($order);
+
+        return $order;
+    }
+
+    /**
+     * Process refund
+     */
+    public function processRefund($orderId, $refundAmount, $reason)
+    {
+        $order = $this->model->find($orderId);
+        if (!$order || !$order->canBeRefunded()) {
+            return false;
+        }
+
+        $order->status = 'refunded';
+        $order->payment_status = 'refunded';
+        $order->notes = $reason;
+        $order->save();
+
+        // Restore stock
+        $this->restoreStock($order);
+
+        return $order;
+    }
+
+    /**
+     * Get order statistics for admin dashboard
+     */
+    public function getStatistics()
+    {
+        return [
+            'total_orders' => $this->model->count(),
+            'total_revenue' => $this->model->sum('total_amount'),
+            'pending_orders' => $this->model->where('status', 'pending')->count(),
+            'confirmed_orders' => $this->model->where('status', 'confirmed')->count(),
+            'processing_orders' => $this->model->where('status', 'processing')->count(),
+            'shipped_orders' => $this->model->where('status', 'shipped')->count(),
+            'delivered_orders' => $this->model->where('status', 'delivered')->count(),
+            'cancelled_orders' => $this->model->where('status', 'cancelled')->count(),
+            'refunded_orders' => $this->model->where('status', 'refunded')->count(),
+            'today_orders' => $this->model->whereDate('created_at', today())->count(),
+            'today_revenue' => $this->model->whereDate('created_at', today())->sum('total_amount'),
+        ];
+    }
 
     /**
      * Restore stock when order is cancelled
