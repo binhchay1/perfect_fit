@@ -13,6 +13,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
+/**
+ * @OA\Tag(
+ *     name="Cart",
+ *     description="Shopping cart management operations"
+ * )
+ */
+
 class CartController extends Controller
 {
     use ApiResponseTrait;
@@ -38,7 +45,48 @@ class CartController extends Controller
     }
 
     /**
-     * Display a listing of the user's cart items.
+     * @OA\Get(
+     *     path="/cart",
+     *     summary="Get user's cart items",
+     *     description="Retrieve all items in the authenticated user's shopping cart",
+     *     tags={"Cart"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Cart items retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Cart items retrieved successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="cart_items", type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="product_id", type="integer", example=1),
+     *                         @OA\Property(property="quantity", type="integer", example=2),
+     *                         @OA\Property(property="price", type="number", format="float", example=150.00),
+     *                         @OA\Property(property="size_name", type="string", example="42"),
+     *                         @OA\Property(property="color_name", type="string", example="Black"),
+     *                         @OA\Property(property="product", type="object",
+     *                             @OA\Property(property="id", type="integer", example=1),
+     *                             @OA\Property(property="name", type="string", example="Nike Air Max"),
+     *                             @OA\Property(property="slug", type="string", example="nike-air-max")
+     *                         )
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="total_items", type="integer", example=3),
+     *                 @OA\Property(property="total_amount", type="number", format="float", example=450.00)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="User not authenticated",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="User not authenticated")
+     *         )
+     *     )
+     * )
      */
     public function index()
     {
@@ -65,7 +113,59 @@ class CartController extends Controller
     }
 
     /**
-     * Add a product to the cart.
+     * @OA\Post(
+     *     path="/cart",
+     *     summary="Add product to cart",
+     *     description="Add a product with specific color and size to the user's shopping cart",
+     *     tags={"Cart"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"product_id","product_color_id","product_size_id","quantity"},
+     *             @OA\Property(property="product_id", type="integer", example=1),
+     *             @OA\Property(property="product_color_id", type="integer", example=1),
+     *             @OA\Property(property="product_size_id", type="integer", example=1),
+     *             @OA\Property(property="quantity", type="integer", minimum=1, maximum=10, example=2)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Product added to cart successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Product added to cart successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="cart_id", type="integer", example=1),
+     *                 @OA\Property(property="product_id", type="integer", example=1),
+     *                 @OA\Property(property="product_color_id", type="integer", example=1),
+     *                 @OA\Property(property="product_size_id", type="integer", example=1),
+     *                 @OA\Property(property="quantity", type="integer", example=2),
+     *                 @OA\Property(property="price", type="number", format="float", example=150.00),
+     *                 @OA\Property(property="size_name", type="string", example="42"),
+     *                 @OA\Property(property="color_name", type="string", example="Black")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Validation error or insufficient stock",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Insufficient stock. Available: 5")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Validation error"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
      */
     public function store(Request $request)
     {
@@ -153,7 +253,47 @@ class CartController extends Controller
     }
 
     /**
-     * Update the quantity of a cart item.
+     * @OA\Put(
+     *     path="/cart/{id}",
+     *     summary="Update cart item quantity",
+     *     description="Update the quantity of a specific cart item",
+     *     tags={"Cart"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Cart item ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"quantity"},
+     *             @OA\Property(property="quantity", type="integer", minimum=1, maximum=10, example=3)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Cart item updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Cart item updated successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="quantity", type="integer", example=3)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Cart item not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Cart item not found")
+     *         )
+     *     )
+     * )
      */
     public function update(Request $request, string $id)
     {
@@ -183,7 +323,36 @@ class CartController extends Controller
     }
 
     /**
-     * Remove a product from the cart.
+     * @OA\Delete(
+     *     path="/cart/{id}",
+     *     summary="Remove item from cart",
+     *     description="Remove a specific item from the user's shopping cart",
+     *     tags={"Cart"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Cart item ID",
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Product removed from cart successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Product removed from cart successfully")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Cart item not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Cart item not found")
+     *         )
+     *     )
+     * )
      */
     public function destroy(string $id)
     {
@@ -202,7 +371,21 @@ class CartController extends Controller
     }
 
     /**
-     * Clear all items from the user's cart.
+     * @OA\Delete(
+     *     path="/cart",
+     *     summary="Clear cart",
+     *     description="Remove all items from the user's shopping cart",
+     *     tags={"Cart"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Cart cleared successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Cart cleared successfully")
+     *         )
+     *     )
+     * )
      */
     public function clear()
     {
@@ -221,7 +404,25 @@ class CartController extends Controller
     }
 
     /**
-     * Get cart summary (total items and price).
+     * @OA\Get(
+     *     path="/cart/summary",
+     *     summary="Get cart summary",
+     *     description="Get summary information about the user's cart (total items and amount)",
+     *     tags={"Cart"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Cart summary retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Cart summary retrieved successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="total_items", type="integer", example=3),
+     *                 @OA\Property(property="total_amount", type="number", format="float", example=450.00)
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function summary()
     {

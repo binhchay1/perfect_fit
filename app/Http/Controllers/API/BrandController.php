@@ -12,6 +12,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+/**
+ * @OA\Tag(
+ *     name="Brands",
+ *     description="Brand management operations"
+ * )
+ */
+
 class BrandController extends Controller
 {
     use ApiResponseTrait;
@@ -28,7 +35,52 @@ class BrandController extends Controller
     }
 
     /**
-     * Display a listing of brands
+     * @OA\Get(
+     *     path="/brands",
+     *     summary="Get all brands",
+     *     description="Retrieve a paginated list of all brands",
+     *     tags={"Brands"},
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Page number for pagination",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Brands retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Brands retrieved successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="current_page", type="integer", example=1),
+     *                 @OA\Property(property="data", type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="name", type="string", example="Nike"),
+     *                         @OA\Property(property="slug", type="string", example="nike"),
+     *                         @OA\Property(property="description", type="string", example="Nike brand description"),
+     *                         @OA\Property(property="logo_path", type="string", example="images/brands/nike-logo.png"),
+     *                         @OA\Property(property="status", type="integer", example=1),
+     *                         @OA\Property(property="created_at", type="string", format="date-time"),
+     *                         @OA\Property(property="updated_at", type="string", format="date-time")
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="first_page_url", type="string"),
+     *                 @OA\Property(property="from", type="integer"),
+     *                 @OA\Property(property="last_page", type="integer"),
+     *                 @OA\Property(property="last_page_url", type="string"),
+     *                 @OA\Property(property="next_page_url", type="string"),
+     *                 @OA\Property(property="path", type="string"),
+     *                 @OA\Property(property="per_page", type="integer", example=15),
+     *                 @OA\Property(property="prev_page_url", type="string"),
+     *                 @OA\Property(property="to", type="integer"),
+     *                 @OA\Property(property="total", type="integer")
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function index(): JsonResponse
     {
@@ -42,7 +94,45 @@ class BrandController extends Controller
     }
 
     /**
-     * Get brand by slug
+     * @OA\Get(
+     *     path="/brand/{brand}",
+     *     summary="Get brand by slug",
+     *     description="Retrieve a specific brand by its slug",
+     *     tags={"Brands"},
+     *     @OA\Parameter(
+     *         name="brand",
+     *         in="path",
+     *         required=true,
+     *         description="Brand slug",
+     *         @OA\Schema(type="string", example="nike")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Brand retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Brand retrieved successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="Nike"),
+     *                 @OA\Property(property="slug", type="string", example="nike"),
+     *                 @OA\Property(property="description", type="string", example="Nike brand description"),
+     *                 @OA\Property(property="logo_path", type="string", example="images/brands/nike-logo.png"),
+     *                 @OA\Property(property="status", type="integer", example=1),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Brand not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Brand not found")
+     *         )
+     *     )
+     * )
      */
     public function showBySlug(string $slug): JsonResponse
     {
@@ -59,7 +149,47 @@ class BrandController extends Controller
         }
     }
     /**
-     * Search brands
+     * @OA\Get(
+     *     path="/brands/search",
+     *     summary="Search brands",
+     *     description="Search brands by keyword",
+     *     tags={"Brands"},
+     *     @OA\Parameter(
+     *         name="keyword",
+     *         in="query",
+     *         required=true,
+     *         description="Search keyword",
+     *         @OA\Schema(type="string", example="nike")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Brands search completed",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Brands search completed"),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Nike"),
+     *                     @OA\Property(property="slug", type="string", example="nike"),
+     *                     @OA\Property(property="description", type="string", example="Nike brand description"),
+     *                     @OA\Property(property="logo_path", type="string", example="images/brands/nike-logo.png"),
+     *                     @OA\Property(property="status", type="integer", example=1),
+     *                     @OA\Property(property="created_at", type="string", format="date-time"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Keyword is required",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Keyword is required")
+     *         )
+     *     )
+     * )
      */
     public function search(Request $request): JsonResponse
     {
@@ -78,7 +208,40 @@ class BrandController extends Controller
         }
     }
     /**
-     * Get brands with products
+     * @OA\Get(
+     *     path="/brand/with-products",
+     *     summary="Get brands with products",
+     *     description="Retrieve brands that have associated products",
+     *     tags={"Brands"},
+     *     @OA\Parameter(
+     *         name="limit",
+     *         in="query",
+     *         description="Number of brands to return",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=10, default=10)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Brands with products retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Brands with products retrieved successfully"),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Nike"),
+     *                     @OA\Property(property="slug", type="string", example="nike"),
+     *                     @OA\Property(property="description", type="string", example="Nike brand description"),
+     *                     @OA\Property(property="logo_path", type="string", example="images/brands/nike-logo.png"),
+     *                     @OA\Property(property="status", type="integer", example=1),
+     *                     @OA\Property(property="products_count", type="integer", example=25),
+     *                     @OA\Property(property="created_at", type="string", format="date-time"),
+     *                     @OA\Property(property="updated_at", type="string", format="date-time")
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function getWithProducts(Request $request): JsonResponse
     {

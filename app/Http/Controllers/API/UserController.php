@@ -40,6 +40,49 @@ class UserController extends Controller
         $this->utility = $utility;
     }
 
+    /**
+     * @OA\Get(
+     *     path="/me",
+     *     summary="Get authenticated user details",
+     *     description="Retrieve the current authenticated user's information",
+     *     tags={"User"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="User details retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="User information retrieved successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="John Doe"),
+     *                 @OA\Property(property="email", type="string", example="user@example.com"),
+     *                 @OA\Property(property="phone", type="string", example="1234567890"),
+     *                 @OA\Property(property="country", type="string", example="Vietnam"),
+     *                 @OA\Property(property="province", type="string", example="Ho Chi Minh"),
+     *                 @OA\Property(property="district", type="string", example="District 1"),
+     *                 @OA\Property(property="ward", type="string", example="Ward 1"),
+     *                 @OA\Property(property="address", type="string", example="123 Main St"),
+     *                 @OA\Property(property="postal_code", type="string", example="70000"),
+     *                 @OA\Property(property="role", type="string", example="user"),
+     *                 @OA\Property(property="status", type="integer", example=1),
+     *                 @OA\Property(property="profile_photo_path", type="string", example="images/upload/user/photo.jpg"),
+     *                 @OA\Property(property="email_verified_at", type="string", format="date-time", example="2024-01-01T10:00:00Z"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="User not authenticated",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="User not authenticated")
+     *         )
+     *     )
+     * )
+     */
     public function me()
     {
         try {

@@ -340,49 +340,6 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * @OA\Get(
-     *     path="/me",
-     *     summary="Get authenticated user details",
-     *     description="Retrieve the current authenticated user's information",
-     *     tags={"User"},
-     *     security={{"BearerAuth": {}}},
-     *     @OA\Response(
-     *         response=200,
-     *         description="User details retrieved successfully",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="User details retrieved successfully"),
-     *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="name", type="string", example="John Doe"),
-     *                 @OA\Property(property="email", type="string", example="user@example.com"),
-     *                 @OA\Property(property="phone", type="string", example="1234567890"),
-     *                 @OA\Property(property="country", type="string", example="Vietnam"),
-     *                 @OA\Property(property="province", type="string", example="Ho Chi Minh"),
-     *                 @OA\Property(property="district", type="string", example="District 1"),
-     *                 @OA\Property(property="ward", type="string", example="Ward 1"),
-     *                 @OA\Property(property="address", type="string", example="123 Main St"),
-     *                 @OA\Property(property="postal_code", type="string", example="70000"),
-     *                 @OA\Property(property="role", type="string", example="user"),
-     *                 @OA\Property(property="status", type="integer", example=1),
-     *                 @OA\Property(property="profile_photo_path", type="string", example="images/upload/user/photo.jpg"),
-     *                 @OA\Property(property="email_verified_at", type="string", format="date-time", example="2024-01-01T10:00:00Z"),
-     *                 @OA\Property(property="created_at", type="string", format="date-time"),
-     *                 @OA\Property(property="updated_at", type="string", format="date-time")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="User not authenticated",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="User not authenticated")
-     *         )
-     *     )
-     * )
-     */
     public function user(Request $request)
     {
         try {
@@ -416,7 +373,23 @@ class AuthController extends Controller
     }
 
     /**
-     * Verify user account via token
+     * @OA\Get(
+     *     path="/auth/verify/{token}",
+     *     summary="Verify user account",
+     *     description="Verify user email and activate account using verification token",
+     *     tags={"Authentication"},
+     *     @OA\Parameter(
+     *         name="token",
+     *         in="path",
+     *         required=true,
+     *         description="Email verification token",
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=302,
+     *         description="Redirect to frontend with verification result"
+     *     )
+     * )
      */
     public function verifyAccount($token)
     {
@@ -461,7 +434,63 @@ class AuthController extends Controller
     }
 
     /**
-     * Resend verification email
+     * @OA\Post(
+     *     path="/auth/verify/resend",
+     *     summary="Resend verification email",
+     *     description="Resend email verification link to user",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email"},
+     *             @OA\Property(property="email", type="string", format="email", example="user@example.com")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Verification email sent successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Email xác thực đã được gửi lại, hãy kiểm tra lại email"),
+     *             @OA\Property(property="type", type="string", example="resend_email_success")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Email not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Tài khoản email không tồn tại"),
+     *             @OA\Property(property="type", type="string", example="data_email_not_exist")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Email already verified",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Email đã được xác thực"),
+     *             @OA\Property(property="type", type="string", example="email_already_verified")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="errors", type="object"),
+     *             @OA\Property(property="message", type="string", example="Dữ liệu đầu vào không hợp lệ"),
+     *             @OA\Property(property="type", type="string", example="validate_data")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=429,
+     *         description="Rate limited",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="You can only send one email every minute."),
+     *             @OA\Property(property="type", type="string", example="prevent_request_email")
+     *         )
+     *     )
+     * )
      */
     public function resendVerifyAccount(Request $request)
     {
