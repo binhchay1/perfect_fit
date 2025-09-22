@@ -36,7 +36,7 @@ return new class extends Migration
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('members');
+            $table->dropColumn('country');
             $table->dropColumn('province');
             $table->dropColumn('district');
             $table->dropColumn('ward');
@@ -46,9 +46,9 @@ return new class extends Migration
             $table->dropColumn('postal_code');
             $table->dropColumn('phone');
             $table->dropColumn('status');
-            $table->dropColumn('profile_photo_path', 2048);
-            $table->dropColumn('facebook_id')->nullable();
-            $table->dropColumn('google_id')->nullable();
+            $table->dropColumn('profile_photo_path');
+            $table->dropColumn('facebook_id');
+            $table->dropColumn('google_id');
         });
     }
 };
