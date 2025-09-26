@@ -14,6 +14,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * @OA\Tag(
+ *     name="Payments",
+ *     description="Payment processing operations"
+ * )
+ */
 class PaymentController extends Controller
 {
     use ApiResponseTrait;
@@ -26,7 +32,63 @@ class PaymentController extends Controller
     }
 
     /**
-     * Create payment request (supports multiple payment methods)
+     * @OA\Post(
+     *     path="/payment/create",
+     *     summary="Create payment request",
+     *     description="Create a payment request for an order with various payment methods",
+     *     tags={"Payments"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"order_id", "payment_method"},
+     *             @OA\Property(property="order_id", type="integer", example=1),
+     *             @OA\Property(property="payment_method", type="string", enum={"cash", "vnpay", "momo", "bank_transfer", "credit_card", "debit_card"}, example="vnpay")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Payment request created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Payment request created successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="payment_id", type="integer", example=1),
+     *                 @OA\Property(property="transaction_id", type="integer", example=1),
+     *                 @OA\Property(property="payment_url", type="string", example="https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_Amount=4500000&vnp_TxnRef=1..."),
+     *                 @OA\Property(property="order_id", type="integer", example=1),
+     *                 @OA\Property(property="amount", type="number", format="float", example=450.00),
+     *                 @OA\Property(property="order_number", type="string", example="ORD-20241226-ABC123"),
+     *                 @OA\Property(property="payment_method", type="string", example="vnpay")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Invalid request or order status",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Order is not in pending status")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Order not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Order not found or access denied")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Validation error"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
      */
     public function createPayment(Request $request): JsonResponse
     {
@@ -177,7 +239,93 @@ class PaymentController extends Controller
     }
 
     /**
-     * Handle VNPay callback
+     * @OA\Get(
+     *     path="/payment/vnpay/callback",
+     *     summary="VNPay callback",
+     *     description="Handle payment callback from VNPay gateway (public endpoint)",
+     *     tags={"Payments"},
+     *     @OA\Parameter(
+     *         name="vnp_Amount",
+     *         in="query",
+     *         description="Payment amount",
+     *         required=true,
+     *         @OA\Schema(type="string", example="4500000")
+     *     ),
+     *     @OA\Parameter(
+     *         name="vnp_BankCode",
+     *         in="query",
+     *         description="Bank code",
+     *         required=false,
+     *         @OA\Schema(type="string", example="NCB")
+     *     ),
+     *     @OA\Parameter(
+     *         name="vnp_BankTranNo",
+     *         in="query",
+     *         description="Bank transaction number",
+     *         required=false,
+     *         @OA\Schema(type="string", example="VNP12345678")
+     *     ),
+     *     @OA\Parameter(
+     *         name="vnp_CardType",
+     *         in="query",
+     *         description="Card type",
+     *         required=false,
+     *         @OA\Schema(type="string", example="ATM")
+     *     ),
+     *     @OA\Parameter(
+     *         name="vnp_OrderInfo",
+     *         in="query",
+     *         description="Order information",
+     *         required=true,
+     *         @OA\Schema(type="string", example="Thanh toan don hang #ORD-20241226-ABC123")
+     *     ),
+     *     @OA\Parameter(
+     *         name="vnp_PayDate",
+     *         in="query",
+     *         description="Payment date",
+     *         required=true,
+     *         @OA\Schema(type="string", example="20241226103000")
+     *     ),
+     *     @OA\Parameter(
+     *         name="vnp_ResponseCode",
+     *         in="query",
+     *         description="Response code (00 = success)",
+     *         required=true,
+     *         @OA\Schema(type="string", example="00")
+     *     ),
+     *     @OA\Parameter(
+     *         name="vnp_TmnCode",
+     *         in="query",
+     *         description="Terminal code",
+     *         required=true,
+     *         @OA\Schema(type="string", example="VNPAYMENT")
+     *     ),
+     *     @OA\Parameter(
+     *         name="vnp_TransactionNo",
+     *         in="query",
+     *         description="Transaction number",
+     *         required=true,
+     *         @OA\Schema(type="string", example="12345678")
+     *     ),
+     *     @OA\Parameter(
+     *         name="vnp_TxnRef",
+     *         in="query",
+     *         description="Transaction reference",
+     *         required=true,
+     *         @OA\Schema(type="string", example="1")
+     *     ),
+     *     @OA\Parameter(
+     *         name="vnp_SecureHash",
+     *         in="query",
+     *         description="Security hash",
+     *         required=true,
+     *         @OA\Schema(type="string", example="abc123...")
+     *     ),
+     *     @OA\Response(
+     *         response=302,
+     *         description="Redirect to frontend with payment result"
+     *     )
+     * )
      */
     public function vnpayCallback(Request $request)
     {
@@ -236,7 +384,70 @@ class PaymentController extends Controller
     }
 
     /**
-     * Get payment status
+     * @OA\Get(
+     *     path="/payment/status",
+     *     summary="Get payment status",
+     *     description="Get detailed status information for a specific payment",
+     *     tags={"Payments"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="payment_id",
+     *         in="query",
+     *         required=true,
+     *         description="Payment ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Payment status retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Payment status retrieved successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="payment_id", type="integer", example=1),
+     *                 @OA\Property(property="order_id", type="integer", example=1),
+     *                 @OA\Property(property="order_number", type="string", example="ORD-20241226-ABC123"),
+     *                 @OA\Property(property="amount", type="number", format="float", example=450.00),
+     *                 @OA\Property(property="payment_method", type="string", example="vnpay"),
+     *                 @OA\Property(property="payment_provider", type="string", example="vnpay"),
+     *                 @OA\Property(property="status", type="string", example="paid"),
+     *                 @OA\Property(property="transaction_id", type="string", example="VNP123456789"),
+     *                 @OA\Property(property="external_payment_id", type="string", example="12345678"),
+     *                 @OA\Property(property="paid_at", type="string", format="date-time", example="2024-12-26T10:30:00Z"),
+     *                 @OA\Property(property="order_status", type="string", example="confirmed"),
+     *                 @OA\Property(property="total_paid", type="number", format="float", example=450.00),
+     *                 @OA\Property(property="total_refunded", type="number", format="float", example=0.00),
+     *                 @OA\Property(property="transactions", type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="type", type="string", example="payment"),
+     *                         @OA\Property(property="status", type="string", example="completed"),
+     *                         @OA\Property(property="amount", type="number", format="float", example=450.00),
+     *                         @OA\Property(property="gateway_transaction_id", type="string", example="VNP123456789"),
+     *                         @OA\Property(property="processed_at", type="string", format="date-time", example="2024-12-26T10:30:00Z")
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Payment not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Payment not found or access denied")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Validation error"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
      */
     public function getPaymentStatus(Request $request): JsonResponse
     {
@@ -292,7 +503,54 @@ class PaymentController extends Controller
     }
 
     /**
-     * Get payment link for order (handles interrupted payment flows)
+     * @OA\Get(
+     *     path="/orders/{order_id}/payment-link",
+     *     summary="Get payment link",
+     *     description="Get or renew payment link for an order (handles interrupted payment flows)",
+     *     tags={"Payments"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="order_id",
+     *         in="path",
+     *         required=true,
+     *         description="Order ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Payment link retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Payment link is still valid"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="status", type="string", example="valid"),
+     *                 @OA\Property(property="payment_id", type="integer", example=1),
+     *                 @OA\Property(property="payment_url", type="string", example="https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_Amount=4500000&vnp_TxnRef=1..."),
+     *                 @OA\Property(property="order_id", type="integer", example=1),
+     *                 @OA\Property(property="amount", type="number", format="float", example=450.00),
+     *                 @OA\Property(property="order_number", type="string", example="ORD-20241226-ABC123"),
+     *                 @OA\Property(property="payment_method", type="string", example="vnpay"),
+     *                 @OA\Property(property="expires_at", type="string", format="date-time", example="2024-12-26T11:00:00Z")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Invalid order status or payment method",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Order is not in pending status")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Order or payment not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Order not found or access denied")
+     *         )
+     *     )
+     * )
      */
     public function getPaymentLink(Request $request, $orderId): JsonResponse
     {

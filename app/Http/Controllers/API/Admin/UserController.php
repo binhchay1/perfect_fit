@@ -10,6 +10,12 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * @OA\Tag(
+ *     name="Admin Users",
+ *     description="Admin user management operations"
+ * )
+ */
 class UserController extends Controller
 {
     use ApiResponseTrait;
@@ -26,7 +32,71 @@ class UserController extends Controller
     }
 
     /**
-     * Get all users for admin with optional filters
+     * @OA\Get(
+     *     path="/admin/users",
+     *     summary="Get all users",
+     *     description="Get a paginated list of all users with optional filtering",
+     *     tags={"Admin Users"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Number of users per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=15)
+     *     ),
+     *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Search term for user name or email",
+     *         required=false,
+     *         @OA\Schema(type="string", example="john")
+     *     ),
+     *     @OA\Parameter(
+     *         name="role",
+     *         in="query",
+     *         description="Filter by user role",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"admin", "user"}, example="user")
+     *     ),
+     *     @OA\Parameter(
+     *         name="status",
+     *         in="query",
+     *         description="Filter by user status",
+     *         required=false,
+     *         @OA\Schema(type="integer", enum={0, 1}, example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Users retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Users retrieved successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="current_page", type="integer", example=1),
+     *                 @OA\Property(property="data", type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="name", type="string", example="John Doe"),
+     *                         @OA\Property(property="email", type="string", example="john@example.com"),
+     *                         @OA\Property(property="phone", type="string", example="1234567890"),
+     *                         @OA\Property(property="role", type="string", example="user"),
+     *                         @OA\Property(property="status", type="integer", example=1),
+     *                         @OA\Property(property="email_verified_at", type="string", format="date-time", example="2024-12-26T10:00:00Z"),
+     *                         @OA\Property(property="created_at", type="string", format="date-time"),
+     *                         @OA\Property(property="updated_at", type="string", format="date-time")
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="first_page_url", type="string"),
+     *                 @OA\Property(property="last_page_url", type="string"),
+     *                 @OA\Property(property="next_page_url", type="string"),
+     *                 @OA\Property(property="prev_page_url", type="string"),
+     *                 @OA\Property(property="per_page", type="integer", example=15),
+     *                 @OA\Property(property="total", type="integer")
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function getAll(Request $request): JsonResponse
     {
@@ -50,7 +120,53 @@ class UserController extends Controller
     }
 
     /**
-     * Show a specific user
+     * @OA\Get(
+     *     path="/admin/user/{id}",
+     *     summary="Get specific user",
+     *     description="Get detailed information about a specific user by ID",
+     *     tags={"Admin Users"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="User ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="User retrieved successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="John Doe"),
+     *                 @OA\Property(property="email", type="string", example="john@example.com"),
+     *                 @OA\Property(property="phone", type="string", example="1234567890"),
+     *                 @OA\Property(property="country", type="string", example="Vietnam"),
+     *                 @OA\Property(property="province", type="string", example="Ho Chi Minh"),
+     *                 @OA\Property(property="district", type="string", example="District 1"),
+     *                 @OA\Property(property="ward", type="string", example="Ward 1"),
+     *                 @OA\Property(property="address", type="string", example="123 Main St"),
+     *                 @OA\Property(property="postal_code", type="string", example="70000"),
+     *                 @OA\Property(property="role", type="string", example="user"),
+     *                 @OA\Property(property="status", type="integer", example=1),
+     *                 @OA\Property(property="email_verified_at", type="string", format="date-time", example="2024-12-26T10:00:00Z"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="User not found")
+     *         )
+     *     )
+     * )
      */
     public function show(string $id): JsonResponse
     {
@@ -66,7 +182,58 @@ class UserController extends Controller
     }
 
     /**
-     * Update user role and status only (Admin can only change role and status)
+     * @OA\Post(
+     *     path="/admin/user/{id}",
+     *     summary="Update user",
+     *     description="Update user role and status (admin can only modify role and status, not personal info)",
+     *     tags={"Admin Users"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="User ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="integer", enum={0, 1}, example=1),
+     *             @OA\Property(property="role", type="string", enum={"admin", "user"}, example="user")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="User role/status updated successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="John Doe"),
+     *                 @OA\Property(property="email", type="string", example="john@example.com"),
+     *                 @OA\Property(property="role", type="string", example="user"),
+     *                 @OA\Property(property="status", type="integer", example=1)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="No valid fields to update",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="No valid fields to update. Admin can only update role and status.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="User not found")
+     *         )
+     *     )
+     * )
      */
     public function update(Request $request, string $id): JsonResponse
     {
@@ -103,7 +270,36 @@ class UserController extends Controller
     }
 
     /**
-     * Delete a specific user
+     * @OA\Delete(
+     *     path="/admin/user/{id}",
+     *     summary="Delete user",
+     *     description="Delete a specific user by ID",
+     *     tags={"Admin Users"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="User ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="User deleted successfully")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="User not found")
+     *         )
+     *     )
+     * )
      */
     public function destroy(string $id): JsonResponse
     {
@@ -125,7 +321,41 @@ class UserController extends Controller
     }
 
     /**
-     * Toggle active status for a user
+     * @OA\Post(
+     *     path="/admin/user/{id}/toggle-status",
+     *     summary="Toggle user status",
+     *     description="Toggle the active/inactive status of a specific user",
+     *     tags={"Admin Users"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="User ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User status updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="User status updated successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="John Doe"),
+     *                 @OA\Property(property="status", type="integer", example=1)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="User not found")
+     *         )
+     *     )
+     * )
      */
     public function toggleStatus(string $id): JsonResponse
     {
@@ -141,7 +371,30 @@ class UserController extends Controller
     }
 
     /**
-     * Get user statistics for admin dashboard
+     * @OA\Get(
+     *     path="/admin/users/statistics",
+     *     summary="Get user statistics",
+     *     description="Get comprehensive user statistics for admin dashboard",
+     *     tags={"Admin Users"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="User statistics retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="User statistics retrieved successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="total_users", type="integer", example=1200),
+     *                 @OA\Property(property="active_users", type="integer", example=1150),
+     *                 @OA\Property(property="inactive_users", type="integer", example=50),
+     *                 @OA\Property(property="admin_users", type="integer", example=3),
+     *                 @OA\Property(property="regular_users", type="integer", example=1197),
+     *                 @OA\Property(property="verified_users", type="integer", example=1100),
+     *                 @OA\Property(property="unverified_users", type="integer", example=100)
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function statistics(): JsonResponse
     {

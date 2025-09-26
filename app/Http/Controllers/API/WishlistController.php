@@ -11,6 +11,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
+/**
+ * @OA\Tag(
+ *     name="Wishlist",
+ *     description="Wishlist management operations"
+ * )
+ */
 class WishlistController extends Controller
 {
     use ApiResponseTrait;
@@ -30,7 +36,70 @@ class WishlistController extends Controller
     }
 
     /**
-     * Display a listing of the user's wishlist items.
+     * @OA\Get(
+     *     path="/wishlist",
+     *     summary="Get user's wishlist",
+     *     description="Retrieve a paginated list of the authenticated user's wishlist items",
+     *     tags={"Wishlist"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Number of items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=15)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Wishlist items retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Wishlist items retrieved successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="current_page", type="integer", example=1),
+     *                 @OA\Property(property="data", type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="user_id", type="integer", example=1),
+     *                         @OA\Property(property="product_id", type="integer", example=1),
+     *                         @OA\Property(property="created_at", type="string", format="date-time"),
+     *                         @OA\Property(property="updated_at", type="string", format="date-time"),
+     *                         @OA\Property(property="product", type="object",
+     *                             @OA\Property(property="id", type="integer", example=1),
+     *                             @OA\Property(property="name", type="string", example="Nike Air Max"),
+     *                             @OA\Property(property="slug", type="string", example="nike-air-max"),
+     *                             @OA\Property(property="price", type="number", format="float", example=150.00),
+     *                             @OA\Property(property="brand", type="object",
+     *                                 @OA\Property(property="id", type="integer", example=1),
+     *                                 @OA\Property(property="name", type="string", example="Nike")
+     *                             ),
+     *                             @OA\Property(property="images", type="array",
+     *                                 @OA\Items(
+     *                                     @OA\Property(property="image_path", type="string", example="images/products/nike-air-max.jpg"),
+     *                                     @OA\Property(property="is_primary", type="boolean", example=true)
+     *                                 )
+     *                             )
+     *                         )
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="first_page_url", type="string"),
+     *                 @OA\Property(property="last_page_url", type="string"),
+     *                 @OA\Property(property="next_page_url", type="string"),
+     *                 @OA\Property(property="prev_page_url", type="string"),
+     *                 @OA\Property(property="per_page", type="integer", example=15),
+     *                 @OA\Property(property="total", type="integer")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="User not authenticated",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="User not authenticated")
+     *         )
+     *     )
+     * )
      */
     public function index(Request $request)
     {
@@ -47,7 +116,66 @@ class WishlistController extends Controller
     }
 
     /**
-     * Add a product to the wishlist.
+     * @OA\Post(
+     *     path="/wishlist",
+     *     summary="Add product to wishlist",
+     *     description="Add a product to the authenticated user's wishlist",
+     *     tags={"Wishlist"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"product_id"},
+     *             @OA\Property(property="product_id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Product added to wishlist successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Product added to wishlist successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="user_id", type="integer", example=1),
+     *                 @OA\Property(property="product_id", type="integer", example=1),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time"),
+     *                 @OA\Property(property="product", type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Nike Air Max"),
+     *                     @OA\Property(property="slug", type="string", example="nike-air-max"),
+     *                     @OA\Property(property="price", type="number", format="float", example=150.00),
+     *                     @OA\Property(property="brand", type="object",
+     *                         @OA\Property(property="name", type="string", example="Nike")
+     *                     ),
+     *                     @OA\Property(property="images", type="array",
+     *                         @OA\Items(
+     *                             @OA\Property(property="image_path", type="string", example="images/products/nike-air-max.jpg")
+     *                         )
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Product not available or already in wishlist",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Product is not available")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Validation error"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
      */
     public function store(Request $request)
     {
@@ -83,7 +211,36 @@ class WishlistController extends Controller
     }
 
     /**
-     * Remove a product from the wishlist.
+     * @OA\Delete(
+     *     path="/wishlist/{id}",
+     *     summary="Remove item from wishlist",
+     *     description="Remove a specific item from the authenticated user's wishlist",
+     *     tags={"Wishlist"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Wishlist item ID",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Product removed from wishlist successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Product removed from wishlist successfully")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Wishlist item not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Wishlist item not found")
+     *         )
+     *     )
+     * )
      */
     public function destroy(string $id)
     {
@@ -102,7 +259,45 @@ class WishlistController extends Controller
     }
 
     /**
-     * Remove product from wishlist by product ID.
+     * @OA\Post(
+     *     path="/wishlist/remove-by-product",
+     *     summary="Remove product from wishlist by product ID",
+     *     description="Remove a product from wishlist using product ID instead of wishlist item ID",
+     *     tags={"Wishlist"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"product_id"},
+     *             @OA\Property(property="product_id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Product removed from wishlist successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Product removed from wishlist successfully")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Product not found in wishlist",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Product not found in your wishlist")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Validation error"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
      */
     public function removeByProduct(Request $request)
     {
@@ -129,7 +324,21 @@ class WishlistController extends Controller
     }
 
     /**
-     * Clear all items from the user's wishlist.
+     * @OA\Delete(
+     *     path="/wishlist",
+     *     summary="Clear wishlist",
+     *     description="Remove all items from the authenticated user's wishlist",
+     *     tags={"Wishlist"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Wishlist cleared successfully or already empty",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Wishlist cleared successfully")
+     *         )
+     *     )
+     * )
      */
     public function clear()
     {
@@ -148,7 +357,32 @@ class WishlistController extends Controller
     }
 
     /**
-     * Get wishlist count for user.
+     * @OA\Get(
+     *     path="/wishlist/count",
+     *     summary="Get wishlist count",
+     *     description="Get the total number of items in the authenticated user's wishlist",
+     *     tags={"Wishlist"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Wishlist count retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Wishlist count retrieved successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="count", type="integer", example=5)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="User not authenticated",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="User not authenticated")
+     *         )
+     *     )
+     * )
      */
     public function count()
     {
@@ -163,7 +397,40 @@ class WishlistController extends Controller
     }
 
     /**
-     * Check if product is in wishlist.
+     * @OA\Post(
+     *     path="/wishlist/check",
+     *     summary="Check if product is in wishlist",
+     *     description="Check whether a specific product is in the authenticated user's wishlist",
+     *     tags={"Wishlist"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"product_id"},
+     *             @OA\Property(property="product_id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Wishlist status checked successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Wishlist status checked successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="is_in_wishlist", type="boolean", example=true)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Validation error"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
      */
     public function check(Request $request)
     {

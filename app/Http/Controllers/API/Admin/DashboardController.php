@@ -12,6 +12,12 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
+/**
+ * @OA\Tag(
+ *     name="Admin Dashboard",
+ *     description="Admin dashboard and analytics operations"
+ * )
+ */
 class DashboardController extends Controller
 {
     use ApiResponseTrait;
@@ -34,7 +40,62 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get dashboard overview statistics
+     * @OA\Get(
+     *     path="/admin/dashboard/overview",
+     *     summary="Get dashboard overview",
+     *     description="Get comprehensive dashboard statistics including orders, users, products, and revenue",
+     *     tags={"Admin Dashboard"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Dashboard overview retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Dashboard overview retrieved successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="orders", type="object",
+     *                     @OA\Property(property="total", type="integer", example=150),
+     *                     @OA\Property(property="pending", type="integer", example=10),
+     *                     @OA\Property(property="confirmed", type="integer", example=20),
+     *                     @OA\Property(property="processing", type="integer", example=15),
+     *                     @OA\Property(property="shipped", type="integer", example=25),
+     *                     @OA\Property(property="delivered", type="integer", example=70),
+     *                     @OA\Property(property="cancelled", type="integer", example=8),
+     *                     @OA\Property(property="refunded", type="integer", example=2),
+     *                     @OA\Property(property="today", type="integer", example=5)
+     *                 ),
+     *                 @OA\Property(property="users", type="object",
+     *                     @OA\Property(property="total", type="integer", example=1200),
+     *                     @OA\Property(property="active", type="integer", example=1150),
+     *                     @OA\Property(property="inactive", type="integer", example=50),
+     *                     @OA\Property(property="admin", type="integer", example=3),
+     *                     @OA\Property(property="regular", type="integer", example=1197),
+     *                     @OA\Property(property="verified", type="integer", example=1100),
+     *                     @OA\Property(property="unverified", type="integer", example=100)
+     *                 ),
+     *                 @OA\Property(property="products", type="object",
+     *                     @OA\Property(property="total", type="integer", example=500),
+     *                     @OA\Property(property="active", type="integer", example=450),
+     *                     @OA\Property(property="inactive", type="integer", example=50),
+     *                     @OA\Property(property="low_stock", type="integer", example=15)
+     *                 ),
+     *                 @OA\Property(property="revenue", type="object",
+     *                     @OA\Property(property="total", type="number", format="float", example=150000.00),
+     *                     @OA\Property(property="today", type="number", format="float", example=2500.00),
+     *                     @OA\Property(property="average_order_value", type="number", format="float", example=120.50)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="User not authenticated or not admin",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="User not authenticated")
+     *         )
+     *     )
+     * )
      */
     public function overview(): JsonResponse
     {
@@ -53,7 +114,51 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get revenue analytics with time-based data
+     * @OA\Get(
+     *     path="/admin/dashboard/revenue-analytics",
+     *     summary="Get revenue analytics",
+     *     description="Get detailed revenue analytics with time-based data",
+     *     tags={"Admin Dashboard"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="period",
+     *         in="query",
+     *         description="Time period for analytics",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"7days", "30days", "90days", "1year"}, example="30days", default="30days")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Revenue analytics retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Revenue analytics retrieved successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="period", type="string", example="30days"),
+     *                 @OA\Property(property="data", type="array",
+     *                     @OA\Items(
+     *                         @OA\Property(property="date", type="string", example="2024-12-01"),
+     *                         @OA\Property(property="revenue", type="number", format="float", example=2500.00),
+     *                         @OA\Property(property="orders", type="integer", example=15)
+     *                     )
+     *                 ),
+     *                 @OA\Property(property="summary", type="object",
+     *                     @OA\Property(property="total_revenue", type="number", format="float", example=75000.00),
+     *                     @OA\Property(property="total_orders", type="integer", example=450),
+     *                     @OA\Property(property="average_daily_revenue", type="number", format="float", example=2500.00)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="User not authenticated or not admin",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="User not authenticated")
+     *         )
+     *     )
+     * )
      */
     public function revenueAnalytics(Request $request): JsonResponse
     {
@@ -68,7 +173,41 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get order analytics
+     * @OA\Get(
+     *     path="/admin/dashboard/order-analytics",
+     *     summary="Get order analytics",
+     *     description="Get detailed order analytics including status breakdown and conversion rates",
+     *     tags={"Admin Dashboard"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="period",
+     *         in="query",
+     *         description="Time period for analytics",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"7days", "30days", "90days", "1year"}, example="30days", default="30days")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Order analytics retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Order analytics retrieved successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="status_breakdown", type="object",
+     *                     @OA\Property(property="pending", type="integer", example=10),
+     *                     @OA\Property(property="confirmed", type="integer", example=20),
+     *                     @OA\Property(property="processing", type="integer", example=15),
+     *                     @OA\Property(property="shipped", type="integer", example=25),
+     *                     @OA\Property(property="delivered", type="integer", example=70),
+     *                     @OA\Property(property="cancelled", type="integer", example=8),
+     *                     @OA\Property(property="refunded", type="integer", example=2)
+     *                 ),
+     *                 @OA\Property(property="conversion_rate", type="number", format="float", example=75.5),
+     *                 @OA\Property(property="average_processing_time", type="number", format="float", example=2.5)
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function orderAnalytics(Request $request): JsonResponse
     {
@@ -83,7 +222,48 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get top selling products
+     * @OA\Get(
+     *     path="/admin/dashboard/top-products",
+     *     summary="Get top selling products",
+     *     description="Get the top selling products based on order data",
+     *     tags={"Admin Dashboard"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="limit",
+     *         in="query",
+     *         description="Number of products to return",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=10, default=10)
+     *     ),
+     *     @OA\Parameter(
+     *         name="period",
+     *         in="query",
+     *         description="Time period for analytics",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"7days", "30days", "90days", "1year"}, example="30days", default="30days")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Top selling products retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Top selling products retrieved successfully"),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Nike Air Max"),
+     *                     @OA\Property(property="slug", type="string", example="nike-air-max"),
+     *                     @OA\Property(property="price", type="number", format="float", example=150.00),
+     *                     @OA\Property(property="total_sold", type="integer", example=45),
+     *                     @OA\Property(property="total_revenue", type="number", format="float", example=6750.00),
+     *                     @OA\Property(property="brand", type="object",
+     *                         @OA\Property(property="name", type="string", example="Nike")
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function topProducts(Request $request): JsonResponse
     {
@@ -99,7 +279,34 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get customer analytics
+     * @OA\Get(
+     *     path="/admin/dashboard/customer-analytics",
+     *     summary="Get customer analytics",
+     *     description="Get detailed customer analytics including retention and value metrics",
+     *     tags={"Admin Dashboard"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="period",
+     *         in="query",
+     *         description="Time period for analytics",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"7days", "30days", "90days", "1year"}, example="30days", default="30days")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Customer analytics retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Customer analytics retrieved successfully"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="new_customers", type="integer", example=150),
+     *                 @OA\Property(property="returning_customers", type="integer", example=1050),
+     *                 @OA\Property(property="customer_retention_rate", type="number", format="float", example=75.5),
+     *                 @OA\Property(property="average_customer_value", type="number", format="float", example=125.75)
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function customerAnalytics(Request $request): JsonResponse
     {
@@ -114,7 +321,37 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get brand performance analytics
+     * @OA\Get(
+     *     path="/admin/dashboard/brand-analytics",
+     *     summary="Get brand analytics",
+     *     description="Get brand performance analytics including sales and revenue data",
+     *     tags={"Admin Dashboard"},
+     *     security={{"BearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="period",
+     *         in="query",
+     *         description="Time period for analytics",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"7days", "30days", "90days", "1year"}, example="30days", default="30days")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Brand analytics retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Brand analytics retrieved successfully"),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="brand_name", type="string", example="Nike"),
+     *                     @OA\Property(property="total_orders", type="integer", example=120),
+     *                     @OA\Property(property="total_revenue", type="number", format="float", example=18000.00),
+     *                     @OA\Property(property="average_order_value", type="number", format="float", example=150.00),
+     *                     @OA\Property(property="product_count", type="integer", example=25)
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
      */
     public function brandAnalytics(Request $request): JsonResponse
     {
