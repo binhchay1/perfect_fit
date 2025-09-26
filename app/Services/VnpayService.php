@@ -2,7 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\Payment;
+use App\Models\PaymentCallback;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class VnpayService
 {
@@ -122,5 +126,121 @@ class VnpayService
             $info .= " - {$description}";
         }
         return $info;
+    }
+
+    /**
+     * Create transaction for payment
+     */
+    public function createTransaction(Payment $payment): Transaction
+    {
+        return Transaction::create([
+            'user_id' => $payment->user_id,
+            'order_id' => $payment->order_id,
+            'payment_id' => $payment->id,
+            'type' => 'payment',
+            'status' => 'pending',
+            'amount' => $payment->amount,
+            'currency' => 'VND',
+            'gateway_name' => 'vnpay',
+            'description' => "Payment for order #{$payment->order->order_number}",
+            'metadata' => [
+                'payment_method' => $payment->payment_method,
+                'payment_provider' => $payment->payment_provider,
+            ],
+        ]);
+    }
+
+    /**
+     * Process VNPay callback with new structure
+     */
+    public function processCallback(array $callbackData): array
+    {
+        $vnpTxnRef = $callbackData['vnp_TxnRef'] ?? null;
+        $vnpResponseCode = $callbackData['vnp_ResponseCode'] ?? null;
+        $vnpAmount = $callbackData['vnp_Amount'] ?? null;
+        $vnpTransactionNo = $callbackData['vnp_TransactionNo'] ?? null;
+
+        // Find payment record
+        $payment = Payment::find($vnpTxnRef);
+        if (!$payment) {
+            throw new \Exception('Payment not found');
+        }
+
+        // Check amount
+        $expectedAmount = $this->formatAmount((float) $payment->amount);
+        if ($vnpAmount != $expectedAmount) {
+            throw new \Exception('Amount mismatch');
+        }
+
+        // Get payment status
+        $paymentStatus = $this->getPaymentStatus($vnpResponseCode);
+        $paymentMessage = $this->getPaymentMessage($vnpResponseCode);
+
+        DB::beginTransaction();
+
+        try {
+            // Create callback log
+            PaymentCallback::create([
+                'payment_id' => $payment->id,
+                'gateway_name' => 'vnpay',
+                'request_data' => $callbackData,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+                'status' => 'processed',
+            ]);
+
+            // Update payment
+            $payment->update([
+                'status' => $paymentStatus === 'paid' ? 'paid' : 'failed',
+                'external_payment_id' => $vnpTransactionNo,
+                'paid_at' => $paymentStatus === 'paid' ? now() : null,
+            ]);
+
+            // Update or create transaction
+            $transaction = Transaction::where('payment_id', $payment->id)
+                ->where('type', 'payment')
+                ->first();
+
+            if ($transaction) {
+                $transaction->update([
+                    'status' => $paymentStatus === 'paid' ? 'completed' : 'failed',
+                    'gateway_transaction_id' => $vnpTransactionNo,
+                    'processed_at' => now(),
+                    'description' => $paymentMessage,
+                ]);
+            }
+
+            DB::commit();
+
+            return [
+                'payment' => $payment,
+                'transaction' => $transaction,
+                'status' => $paymentStatus,
+                'message' => $paymentMessage,
+                'gateway_transaction_id' => $vnpTransactionNo,
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Get transaction by gateway transaction ID
+     */
+    public function getTransactionByGatewayId(string $gatewayTransactionId): ?Transaction
+    {
+        return Transaction::where('gateway_transaction_id', $gatewayTransactionId)
+            ->where('gateway_name', 'vnpay')
+            ->first();
+    }
+
+    /**
+     * Get payment by gateway transaction ID
+     */
+    public function getPaymentByGatewayTransactionId(string $gatewayTransactionId): ?Payment
+    {
+        $transaction = $this->getTransactionByGatewayId($gatewayTransactionId);
+        return $transaction ? $transaction->payment : null;
     }
 }

@@ -142,7 +142,7 @@ Route::middleware('auth:api')->group(function () {
 
 // Payment routes
 Route::middleware('auth:api')->group(function () {
-    Route::post('/payment/vnpay/create', [PaymentController::class, 'createVnpayPayment']);
+    Route::post('/payment/create', [PaymentController::class, 'createPayment']);
     Route::get('/payment/status', [PaymentController::class, 'getPaymentStatus']);
 });
 

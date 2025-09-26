@@ -12,12 +12,16 @@ class Payment extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'order_id',
         'amount',
         'payment_method',
+        'payment_provider',
         'status',
         'transaction_id',
+        'external_payment_id',
         'gateway_response',
+        'notes',
         'paid_at',
     ];
 
@@ -25,7 +29,16 @@ class Payment extends Model
         'amount' => 'decimal:2',
         'gateway_response' => 'array',
         'paid_at' => 'datetime',
+        'notes' => 'string',
     ];
+
+    /**
+     * Get the user that owns the payment
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /**
      * Get the order that owns the payment
@@ -33,6 +46,22 @@ class Payment extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+    /**
+     * Get the transactions for the payment
+     */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
+    /**
+     * Get the payment callbacks for the payment
+     */
+    public function paymentCallbacks(): HasMany
+    {
+        return $this->hasMany(PaymentCallback::class);
     }
 
     /**

@@ -12,11 +12,28 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // \App\Models\User::factory(10)->create();
+        // Create or get a test user
+        $testUser = \App\Models\User::firstOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'password' => bcrypt('password'),
+                'email_verified_at' => now(),
+            ]
+        );
 
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        // If user already exists, update the password
+        if ($testUser->wasRecentlyCreated === false) {
+            $testUser->update(['password' => bcrypt('password')]);
+        }
+
+        // Run seeders to populate test data
+        $this->call([
+            BrandSeeder::class,
+            ProductSeeder::class,
+        ]);
+
+        // Create additional test users if needed
+        // \App\Models\User::factory(10)->create();
     }
 }

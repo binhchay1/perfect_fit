@@ -19,8 +19,11 @@ return [
     // VNPay Payment URL
     'url' => env('VNPAY_URL', 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'),
 
-    // Return URL after payment
+    // Return URL after payment (for VNPay callback)
     'return_url' => env('VNPAY_RETURN_URL', 'http://localhost:8000/api/payment/vnpay/callback'),
+
+    // Frontend redirect URL after payment completion
+    'frontend_redirect_url' => env('VNPAY_FRONTEND_REDIRECT_URL', 'http://localhost:3000/payment/result'),
 
     // VNPay API URL
     'api_url' => env('VNPAY_API_URL', 'https://sandbox.vnpayment.vn/merchant_webapi/api/transaction'),

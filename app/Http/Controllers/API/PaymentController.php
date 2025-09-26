@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Transaction;
 use App\Services\VnpayService;
 use App\Traits\ApiResponseTrait;
 use Illuminate\Http\JsonResponse;
@@ -25,13 +26,14 @@ class PaymentController extends Controller
     }
 
     /**
-     * Create VNPay payment request
+     * Create payment request (supports multiple payment methods)
      */
-    public function createVnpayPayment(Request $request): JsonResponse
+    public function createPayment(Request $request): JsonResponse
     {
         try {
             $validated = $request->validate([
                 'order_id' => 'required|integer|exists:orders,id',
+                'payment_method' => 'required|string|in:cash,vnpay,momo,bank_transfer,credit_card,debit_card',
             ]);
 
             $user = Auth::user();
@@ -48,7 +50,15 @@ class PaymentController extends Controller
                 return $this->errorResponse('Order is not in pending status', 400);
             }
 
-            
+            // Check if order has items
+            if (!$order->orderItems || $order->orderItems->count() === 0) {
+                return $this->errorResponse('Order has no items', 400);
+            }
+
+            // Check if order has valid total amount
+            if (!$order->total_amount || $order->total_amount <= 0) {
+                return $this->errorResponse('Order has invalid total amount', 400);
+            }
 
             // Check if payment already exists
             $existingPayment = Payment::where('order_id', $order->id)
@@ -62,45 +72,93 @@ class PaymentController extends Controller
             DB::beginTransaction();
 
             try {
+                // Get payment method
+                $paymentMethodIdentifier = $validated['payment_method'];
+                $paymentMethod = $paymentMethodIdentifier;
+
                 // Create payment record
                 $payment = Payment::create([
+                    'user_id' => $user->id,
                     'order_id' => $order->id,
                     'amount' => $order->total_amount,
-                    'payment_method' => 'vnpay',
+                    'payment_method' => $paymentMethodIdentifier,
+                    'payment_provider' => $paymentMethodIdentifier,
                     'status' => 'pending',
                 ]);
 
-                // Add payment log
-                $payment->addLog('created', 'Payment request created');
+                // Create transaction record
+                $transaction = $this->vnpayService->createTransaction($payment);
 
-                // Create VNPay payment URL
-                $vnpayParams = [
-                    'vnp_Amount' => $this->vnpayService->formatAmount($order->total_amount),
-                    'vnp_OrderInfo' => $this->vnpayService->generateOrderInfo($order->order_number),
-                    'vnp_TxnRef' => $payment->id,
-                    'vnp_ReturnUrl' => config('vnpay.return_url'),
-                ];
+                // Handle different payment methods
+                if (in_array($paymentMethodIdentifier, ['vnpay', 'momo', 'credit_card', 'debit_card'])) {
+                    // Online gateway payment
+                    $vnpayParams = [
+                        'vnp_Amount' => $this->vnpayService->formatAmount((float) $order->total_amount),
+                        'vnp_OrderInfo' => $this->vnpayService->generateOrderInfo($order->order_number),
+                        'vnp_TxnRef' => $payment->id,
+                        'vnp_ReturnUrl' => config('vnpay.return_url'),
+                    ];
 
-                $paymentUrl = $this->vnpayService->createPaymentUrl($vnpayParams);
+                    $paymentUrl = $this->vnpayService->createPaymentUrl($vnpayParams);
 
-                // Update payment with gateway response
-                $payment->update([
-                    'gateway_response' => [
+                    // Update payment with gateway response
+                    $payment->update([
+                        'gateway_response' => [
+                            'payment_url' => $paymentUrl,
+                            'gateway_params' => $vnpayParams,
+                            'created_at' => now()->toISOString(),
+                        ]
+                    ]);
+
+                    DB::commit();
+
+                    return $this->successResponse([
+                        'payment_id' => $payment->id,
+                        'transaction_id' => $transaction->id,
                         'payment_url' => $paymentUrl,
-                        'vnpay_params' => $vnpayParams,
-                        'created_at' => now()->toISOString(),
-                    ]
-                ]);
+                        'order_id' => $order->id,
+                        'amount' => $order->total_amount,
+                        'order_number' => $order->order_number,
+                        'payment_method' => $paymentMethodIdentifier,
+                    ], 'Payment request created successfully');
+                } else {
+                    // Offline payment methods (cash, bank_transfer)
+                    $payment->update(['status' => 'pending']);
+                    $transaction->update(['status' => 'pending']);
 
-                DB::commit();
+                    // For cash payments, we might want to mark as completed immediately
+                    if ($paymentMethodIdentifier === 'cash') {
+                        $payment->update([
+                            'status' => 'paid',
+                            'paid_at' => now(),
+                        ]);
+                        $transaction->update([
+                            'status' => 'completed',
+                            'processed_at' => now(),
+                        ]);
 
-                return $this->successResponse([
-                    'payment_id' => $payment->id,
-                    'payment_url' => $paymentUrl,
-                    'order_id' => $order->id,
-                    'amount' => $order->total_amount,
-                    'order_number' => $order->order_number,
-                ], 'Payment request created successfully');
+                        // Update order status
+                        $order->update([
+                            'payment_status' => 'paid',
+                            'status' => 'confirmed',
+                        ]);
+
+                        // Deduct stock
+                        $this->deductStockForOrder($order);
+                    }
+
+                    DB::commit();
+
+                    return $this->successResponse([
+                        'payment_id' => $payment->id,
+                        'transaction_id' => $transaction->id,
+                        'order_id' => $order->id,
+                        'amount' => $order->total_amount,
+                        'order_number' => $order->order_number,
+                        'payment_method' => $paymentMethodIdentifier,
+                        'message' => $paymentMethodIdentifier === 'cash' ? 'Payment completed successfully' : 'Payment request created. Please complete the payment.',
+                    ], 'Payment request created successfully');
+                }
             } catch (\Exception $e) {
                 DB::rollBack();
                 throw $e;
@@ -108,7 +166,7 @@ class PaymentController extends Controller
         } catch (\Illuminate\Validation\ValidationException $ve) {
             return $this->errorResponse('Validation error', 422, $ve->errors());
         } catch (\Exception $e) {
-            Log::error('Create VNPay payment failed: ' . $e->getMessage());
+            Log::error('Create payment failed: ' . $e->getMessage());
             return $this->serverErrorResponse('Failed to create payment request', $e->getMessage());
         }
     }
@@ -116,7 +174,7 @@ class PaymentController extends Controller
     /**
      * Handle VNPay callback
      */
-    public function vnpayCallback(Request $request): JsonResponse
+    public function vnpayCallback(Request $request)
     {
         try {
             Log::info('VNPay callback received', $request->all());
@@ -124,98 +182,51 @@ class PaymentController extends Controller
             // Verify signature
             if (!$this->vnpayService->verifySignature($request->all())) {
                 Log::error('VNPay signature verification failed', $request->all());
-                return $this->errorResponse('Invalid signature', 400);
+                return redirect($this->buildRedirectUrl($request, 'failed', 'Invalid signature'));
             }
 
-            $vnpResponseCode = $request->vnp_ResponseCode;
-            $vnpTxnRef = $request->vnp_TxnRef;
-            $vnpAmount = $request->vnp_Amount;
-            $vnpTransactionNo = $request->vnp_TransactionNo;
+            // Process the callback using the service
+            $result = $this->vnpayService->processCallback($request->all());
 
-            // Find payment record
-            $payment = Payment::find($vnpTxnRef);
-            if (!$payment) {
-                Log::error('Payment not found', ['payment_id' => $vnpTxnRef]);
-                return $this->errorResponse('Payment not found', 404);
-            }
+            $payment = $result['payment'];
+            $transaction = $result['transaction'];
+            $status = $result['status'];
+            $message = $result['message'];
+            $gatewayTransactionId = $result['gateway_transaction_id'];
 
-            // Check amount
-            $expectedAmount = $this->vnpayService->formatAmount($payment->amount);
-            if ($vnpAmount != $expectedAmount) {
-                Log::error('Amount mismatch', [
-                    'expected' => $expectedAmount,
-                    'received' => $vnpAmount,
-                    'payment_id' => $payment->id
-                ]);
-                return $this->errorResponse('Amount mismatch', 400);
-            }
-
-            DB::beginTransaction();
-
-            try {
-                // Update payment with gateway response
-                $payment->update([
-                    'gateway_response' => array_merge(
-                        $payment->gateway_response ?? [],
-                        [
-                            'callback_response' => $request->all(),
-                            'callback_received_at' => now()->toISOString(),
-                        ]
-                    )
+            // Update order status if payment was successful
+            if ($status === 'paid') {
+                $payment->order->update([
+                    'payment_status' => 'paid',
+                    'status' => 'confirmed',
                 ]);
 
-                // Process payment result
-                $paymentStatus = $this->vnpayService->getPaymentStatus($vnpResponseCode);
-                $paymentMessage = $this->vnpayService->getPaymentMessage($vnpResponseCode);
+                // Deduct stock
+                $this->deductStockForOrder($payment->order);
 
-                if ($paymentStatus === 'paid') {
-                    // Payment successful
-                    $payment->markAsPaid($vnpTransactionNo);
-                    $payment->addLog('paid', $paymentMessage, $request->all());
-
-                    // Update order status
-                    $payment->order->update([
-                        'payment_status' => 'paid',
-                        'status' => 'confirmed',
-                    ]);
-
-                    // Deduct stock (only when payment is successful)
-                    $this->deductStockForOrder($payment->order);
-
-                    Log::info('Payment successful', [
-                        'payment_id' => $payment->id,
-                        'order_id' => $payment->order_id,
-                        'transaction_id' => $vnpTransactionNo
-                    ]);
-                } else {
-                    // Payment failed
-                    $payment->markAsFailed();
-                    $payment->addLog('failed', $paymentMessage, $request->all());
-
-                    Log::info('Payment failed', [
-                        'payment_id' => $payment->id,
-                        'order_id' => $payment->order_id,
-                        'response_code' => $vnpResponseCode,
-                        'message' => $paymentMessage
-                    ]);
-                }
-
-                DB::commit();
-
-                return $this->successResponse([
+                Log::info('Payment successful', [
                     'payment_id' => $payment->id,
                     'order_id' => $payment->order_id,
-                    'status' => $paymentStatus,
-                    'message' => $paymentMessage,
-                    'transaction_id' => $vnpTransactionNo,
-                ], 'Payment callback processed successfully');
-            } catch (\Exception $e) {
-                DB::rollBack();
-                throw $e;
+                    'transaction_id' => $gatewayTransactionId
+                ]);
+            } else {
+                Log::info('Payment failed', [
+                    'payment_id' => $payment->id,
+                    'order_id' => $payment->order_id,
+                    'status' => $status,
+                    'message' => $message
+                ]);
             }
+
+            return redirect($this->buildRedirectUrl($request, $status, $message, [
+                'payment_id' => $payment->id,
+                'order_id' => $payment->order_id,
+                'transaction_id' => $gatewayTransactionId,
+                'amount' => $payment->amount,
+            ]));
         } catch (\Exception $e) {
-            Log::error('VNPay callback processing failed: ' . $e->getMessage());
-            return $this->serverErrorResponse('Failed to process payment callback', $e->getMessage());
+            Log::error('VNPay callback processing failed: ' . $e->getMessage(), $request->all());
+            return redirect($this->buildRedirectUrl($request, 'error', $e->getMessage()));
         }
     }
 
@@ -230,27 +241,43 @@ class PaymentController extends Controller
             ]);
 
             $user = Auth::user();
-            $payment = Payment::with('order')
+            $payment = Payment::with(['order', 'transactions'])
                 ->where('id', $validated['payment_id'])
-                ->whereHas('order', function ($query) use ($user) {
-                    $query->where('user_id', $user->id);
-                })
+                ->where('user_id', $user->id)
                 ->first();
 
             if (!$payment) {
                 return $this->errorResponse('Payment not found or access denied', 404);
             }
 
+            // Get latest transaction
+            $latestTransaction = $payment->transactions()->latest()->first();
+
             return $this->successResponse([
                 'payment_id' => $payment->id,
                 'order_id' => $payment->order_id,
+                'order_number' => $payment->order->order_number,
                 'amount' => $payment->amount,
                 'payment_method' => $payment->payment_method,
+                'payment_provider' => $payment->payment_provider,
                 'status' => $payment->status,
-                'transaction_id' => $payment->transaction_id,
+                'transaction_id' => $latestTransaction?->gateway_transaction_id,
+                'external_payment_id' => $payment->external_payment_id,
                 'paid_at' => $payment->paid_at,
                 'order_status' => $payment->order->status,
-                'order_number' => $payment->order->order_number,
+                'total_paid' => $payment->order_id ? Transaction::getTotalForOrder($payment->order_id) : 0,
+                'total_refunded' => $payment->order_id ? Transaction::getTotalRefundsForOrder($payment->order_id) : 0,
+                'transactions' => $payment->transactions ? $payment->transactions->map(function ($transaction) {
+                    return [
+                        'id' => $transaction->id,
+                        'type' => $transaction->type,
+                        'status' => $transaction->status,
+                        'amount' => $transaction->amount,
+                        'gateway_transaction_id' => $transaction->gateway_transaction_id,
+                        'processed_at' => $transaction->processed_at,
+                        'description' => $transaction->description,
+                    ];
+                }) : [],
             ], 'Payment status retrieved successfully');
         } catch (\Illuminate\Validation\ValidationException $ve) {
             return $this->errorResponse('Validation error', 422, $ve->errors());
@@ -264,10 +291,60 @@ class PaymentController extends Controller
      */
     private function deductStockForOrder(Order $order): void
     {
+        if (!$order->orderItems) {
+            return;
+        }
+
         foreach ($order->orderItems as $orderItem) {
-            if ($orderItem->productSize) {
+            if ($orderItem && $orderItem->productSize && $orderItem->quantity > 0) {
                 $orderItem->productSize->decrement('quantity', $orderItem->quantity);
             }
         }
+    }
+
+    /**
+     * Build redirect URL for frontend
+     */
+    private function buildRedirectUrl(Request $request, string $status, string $message, array $data = []): string
+    {
+        $baseUrl = config('vnpay.frontend_redirect_url');
+
+        if (empty($baseUrl)) {
+            Log::error('Frontend redirect URL not configured');
+            $baseUrl = config('app.url', 'http://localhost:8000') . '/payment/result';
+        }
+
+        // Build query parameters
+        $params = [
+            'status' => $status,
+            'message' => urlencode($message),
+            'payment_id' => $request->vnp_TxnRef ?? null,
+            'order_id' => $request->vnp_OrderInfo ? $this->extractOrderIdFromOrderInfo($request->vnp_OrderInfo) : null,
+            'transaction_id' => $request->vnp_TransactionNo ?? null,
+            'amount' => $request->vnp_Amount ? $this->vnpayService->parseAmount((int) $request->vnp_Amount) : null,
+        ];
+
+        // Merge with additional data
+        $params = array_merge($params, $data);
+
+        // Remove null values and encode
+        $params = array_filter($params, function($value) {
+            return $value !== null && $value !== '';
+        });
+
+        return $baseUrl . '?' . http_build_query($params);
+    }
+
+    /**
+     * Extract order ID from VNPay order info
+     */
+    private function extractOrderIdFromOrderInfo(string $orderInfo): ?string
+    {
+        // Order info format: "Thanh toan don hang #{order_number}"
+        // We need to extract the order number
+        if (preg_match('/#([A-Za-z0-9\-_]+)/', $orderInfo, $matches)) {
+            return $matches[1];
+        }
+        return null;
     }
 }

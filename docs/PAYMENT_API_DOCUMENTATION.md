@@ -2,7 +2,7 @@
 
 ## 📋 Overview
 
-Payment API provides endpoints for handling VNPay payment integration, including payment creation, callback processing, and status checking.
+Payment API provides a comprehensive transaction management system supporting multiple payment methods including VNPay, Cash on Delivery, Bank Transfer, and more. The system includes robust transaction tracking, audit trails, and support for refunds and adjustments.
 
 ---
 
@@ -12,11 +12,74 @@ Payment API provides endpoints for handling VNPay payment integration, including
 
 ```env
 # VNPay Configuration
-VNPAY_TMN_CODE=your_sandbox_tmn_code
-VNPAY_HASH_SECRET=your_sandbox_hash_secret
+VNPAY_TMN_CODE="YOUR_TMN_CODE"
+VNPAY_HASH_SECRET="YOUR_HASH_SECRET"
 VNPAY_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
 VNPAY_RETURN_URL=http://localhost:8000/api/payment/vnpay/callback
 VNPAY_API_URL=https://sandbox.vnpayment.vn/merchant_webapi/api/transaction
+VNPAY_FRONTEND_REDIRECT_URL=http://localhost:3000/payment/result
+
+### Supported Payment Methods
+
+The system supports multiple payment methods:
+
+| Method | Identifier | Description | Requires Gateway |
+|--------|------------|-------------|------------------|
+| Cash | `cash` | Cash payment upon delivery | No |
+| VNPay | `vnpay` | Online payment gateway | Yes |
+| MoMo | `momo` | MoMo e-wallet | Yes |
+| Bank Transfer | `bank_transfer` | Bank transfer payment | No |
+| Credit Card | `credit_card` | Credit card payment | Yes |
+| Debit Card | `debit_card` | Debit card payment | Yes |
+
+### Database Structure
+
+The payment system uses the following database structure:
+
+**Tables:**
+- `users` - Customer information
+- `orders` - Order data
+- `payments` - Payment method and status
+- `transactions` - Money flow tracking (payments, refunds, adjustments)
+- `payment_callbacks` - Gateway callback logs for auditing
+
+**Key Relationships:**
+- User can have many orders
+- Order can have many payments
+- Payment can have many transactions
+- Transactions track money flow (payment, refund, adjustment)
+
+### Frontend Integration
+
+After payment processing, users are redirected to the frontend URL with the following parameters:
+
+**Query Parameters:**
+- `status` - Payment status: `success`, `failed`, or `error`
+- `message` - Human-readable payment message
+- `payment_id` - Unique payment identifier
+- `order_id` - Order identifier (extracted from VNPay order info)
+- `transaction_id` - VNPay transaction number (for successful payments)
+- `amount` - Payment amount in VND (for successful payments)
+
+**Frontend Handling Example:**
+```javascript
+// Handle payment result redirect
+const urlParams = new URLSearchParams(window.location.search);
+const paymentStatus = urlParams.get('status');
+const paymentMessage = urlParams.get('message');
+const paymentId = urlParams.get('payment_id');
+const orderId = urlParams.get('order_id');
+
+if (paymentStatus === 'success') {
+    // Payment successful - show success page
+    console.log('Payment successful:', paymentMessage);
+    console.log('Payment ID:', paymentId);
+    console.log('Order ID:', orderId);
+} else {
+    // Payment failed - show error page
+    console.log('Payment failed:', paymentMessage);
+}
+```
 ```
 
 ### Test Card Information
@@ -32,11 +95,11 @@ OTP: 123456
 
 ## 🚀 API Endpoints
 
-### 1. Create VNPay Payment
+### 1. Create Payment Request
 
-**Endpoint:** `POST /api/payment/vnpay/create`
+**Endpoint:** `POST /api/payment/create`
 
-**Description:** Creates a VNPay payment request and returns payment URL for user to complete payment.
+**Description:** Creates a payment request for the specified payment method and returns appropriate response.
 
 **Authentication:** Required (Bearer Token)
 
@@ -44,7 +107,8 @@ OTP: 123456
 
 ```json
 {
-    "order_id": 17
+    "order_id": 17,
+    "payment_method": "vnpay"
 }
 ```
 
@@ -52,10 +116,11 @@ OTP: 123456
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | order_id | integer | Yes | ID of the order to be paid |
+| payment_method | string | Yes | Payment method (cash, vnpay, momo, bank_transfer, credit_card, debit_card) |
 
 **Response Examples:**
 
-**Success (200):**
+**Success (200) - Online Gateway (VNPay):**
 
 ```json
 {
@@ -63,10 +128,30 @@ OTP: 123456
     "message": "Payment request created successfully",
     "data": {
         "payment_id": 1,
+        "transaction_id": 1,
         "payment_url": "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_Amount=17160000&vnp_Command=pay&vnp_CreateDate=20250912161530&vnp_CurrCode=VND&vnp_IpAddr=127.0.0.1&vnp_Locale=vn&vnp_OrderInfo=TEST-1757668551&vnp_ReturnUrl=http://localhost:8000/api/payment/vnpay/callback&vnp_TmnCode=1QUQF2FW&vnp_TxnRef=1&vnp_Version=2.1.0&vnp_SecureHash=abc123...",
         "order_id": 17,
         "amount": 17160000,
-        "order_number": "TEST-1757668551"
+        "order_number": "TEST-1757668551",
+        "payment_method": "vnpay"
+    }
+}
+```
+
+**Success (200) - Cash Payment:**
+
+```json
+{
+    "success": true,
+    "message": "Payment completed successfully",
+    "data": {
+        "payment_id": 2,
+        "transaction_id": 2,
+        "order_id": 18,
+        "amount": 250000,
+        "order_number": "TEST-1757668552",
+        "payment_method": "cash",
+        "message": "Payment completed successfully"
     }
 }
 ```
@@ -117,13 +202,28 @@ OTP: 123456
     "data": {
         "payment_id": 1,
         "order_id": 17,
+        "order_number": "TEST-1757668551",
         "amount": 17160000,
         "payment_method": "vnpay",
+        "payment_provider": "vnpay",
         "status": "paid",
         "transaction_id": "VNP1234567890",
+        "external_payment_id": "VNP1234567890",
         "paid_at": "2025-09-12T16:15:30.000000Z",
         "order_status": "confirmed",
-        "order_number": "TEST-1757668551"
+        "total_paid": 17160000,
+        "total_refunded": 0,
+        "transactions": [
+            {
+                "id": 1,
+                "type": "payment",
+                "status": "completed",
+                "amount": 17160000,
+                "gateway_transaction_id": "VNP1234567890",
+                "processed_at": "2025-09-12T16:15:30.000000Z",
+                "description": "Giao dịch thành công"
+            }
+        ]
     }
 }
 ```
@@ -144,7 +244,7 @@ OTP: 123456
 
 **Endpoint:** `GET /api/payment/vnpay/callback`
 
-**Description:** Handles VNPay payment callback. This endpoint is called by VNPay after payment processing.
+**Description:** Handles VNPay payment callback. This endpoint is called by VNPay after payment processing and redirects to the frontend with payment result.
 
 **Authentication:** Not required (Public endpoint)
 
@@ -163,32 +263,25 @@ OTP: 123456
 | vnp_TxnRef | string | Payment reference (Payment ID) |
 | vnp_SecureHash | string | Security hash |
 
-**Response Examples:**
+**Behavior:**
+- Verifies VNPay signature for security
+- Processes payment result (success/failure)
+- Updates payment and order status in database
+- Redirects to frontend URL with payment result parameters
 
-**Success (200):**
+**Frontend Redirect Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| status | string | Payment status (success, failed, error) |
+| message | string | Payment message |
+| payment_id | string | Payment ID |
+| order_id | string | Order ID extracted from order info |
+| transaction_id | string | VNPay transaction number |
+| amount | string | Payment amount |
 
-```json
-{
-    "success": true,
-    "message": "Payment callback processed successfully",
-    "data": {
-        "payment_id": 1,
-        "order_id": 17,
-        "status": "paid",
-        "message": "Giao dịch thành công",
-        "transaction_id": "VNP1234567890"
-    }
-}
+**Example Redirect URL:**
 ```
-
-**Error (400):**
-
-```json
-{
-    "success": false,
-    "message": "Invalid signature",
-    "data": null
-}
+http://localhost:3000/payment/result?status=success&message=Giao+dịch+thành+công&payment_id=1&order_id=TEST-1757668551&transaction_id=VNP1234567890&amount=17160000
 ```
 
 ---
@@ -355,29 +448,69 @@ Payment activities are logged in:
 
 ### Database Tables
 
--   `payments` - Payment records
--   `payment_logs` - Payment activity logs
+-   `users` - Customer information
 -   `orders` - Order information
 -   `order_items` - Order items
+-   `payments` - Payment records (method and status)
+-   `transactions` - Money flow tracking (payments, refunds, adjustments)
+-   `payment_callbacks` - Gateway callback logs for auditing
+-   `payment_logs` - Payment activity logs
 
 ---
 
 ## 🔄 Payment Flow
 
+### Complete Payment Flow
+
 ```
 1. User creates order
-2. User requests payment
+2. User requests payment (specifies payment method)
 3. System creates payment record
-4. System generates VNPay URL
-5. User redirected to VNPay
-6. User completes payment
-7. VNPay calls callback
-8. System verifies signature
-9. System updates payment status
-10. System updates order status
-11. System deducts stock (if successful)
-12. System sends notifications
+4. System creates transaction record
+5. If online gateway (VNPay, MoMo, etc.):
+   - System generates gateway URL
+   - User redirected to gateway
+   - User completes payment
+   - Gateway calls callback
+   - System verifies signature
+   - System updates payment and transaction status
+   - System updates order status
+   - System deducts stock
+   - System redirects to frontend with result
+6. If offline payment (Cash, Bank Transfer):
+   - System marks as pending or completed
+   - Admin processes payment manually
+   - System updates status when confirmed
 ```
+
+### Frontend Integration Flow
+
+```
+1. User completes payment on gateway
+2. Gateway processes payment and calls callback
+3. System updates database and redirects to frontend
+4. Frontend receives redirect with payment result
+5. Frontend displays success/failure page
+6. User can check payment status via API if needed
+```
+
+### Transaction Tracking
+
+```
+1. Every payment creates a transaction record
+2. Transactions track money flow (payment, refund, adjustment)
+3. Multiple transactions can be linked to one payment
+4. Transactions provide audit trail for all money movement
+5. Callbacks are logged separately for debugging
+```
+
+### Key Benefits of New Structure
+
+- **Separation of Concerns**: Payments vs Transactions
+- **Multiple Payment Methods**: Easy to add new gateways
+- **Audit Trail**: Complete money flow tracking
+- **Flexibility**: Support for refunds, adjustments, chargebacks
+- **Scalability**: Can handle complex payment scenarios
 
 ---
 
