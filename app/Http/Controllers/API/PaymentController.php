@@ -86,6 +86,11 @@ class PaymentController extends Controller
                     'status' => 'pending',
                 ]);
 
+                // Generate session token for online gateway payments (30 minutes expiration)
+                if (in_array($paymentMethodIdentifier, ['vnpay', 'momo', 'credit_card', 'debit_card'])) {
+                    $payment->generateSessionToken(30);
+                }
+
                 // Create transaction record
                 $transaction = $this->vnpayService->createTransaction($payment);
 
@@ -284,6 +289,143 @@ class PaymentController extends Controller
         } catch (\Exception $e) {
             return $this->serverErrorResponse('Failed to get payment status', $e->getMessage());
         }
+    }
+
+    /**
+     * Get payment link for order (handles interrupted payment flows)
+     */
+    public function getPaymentLink(Request $request, $orderId): JsonResponse
+    {
+        try {
+            $user = Auth::user();
+            $order = Order::where('id', $orderId)
+                ->where('user_id', $user->id)
+                ->first();
+
+            if (!$order) {
+                return $this->errorResponse('Order not found or access denied', 404);
+            }
+
+            // Check if order is in pending status
+            if ($order->status !== 'pending') {
+                return $this->errorResponse('Order is not in pending status', 400);
+            }
+
+            // Get the latest pending payment for this order
+            $payment = Payment::where('order_id', $order->id)
+                ->where('status', 'pending')
+                ->latest()
+                ->first();
+
+            if (!$payment) {
+                return $this->errorResponse('No pending payment found for this order', 404);
+            }
+
+            // Check payment status and session validity
+            if ($payment->status === 'paid') {
+                return $this->successResponse([
+                    'status' => 'paid',
+                    'message' => 'Payment has already been completed',
+                    'payment_id' => $payment->id,
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'amount' => $payment->amount,
+                    'payment_method' => $payment->payment_method,
+                ], 'Payment already completed');
+            }
+
+            // Check if it's an online gateway payment (VNPay, MoMo, etc.)
+            $isOnlineGateway = in_array($payment->payment_method, ['vnpay', 'momo', 'credit_card', 'debit_card']);
+
+            if (!$isOnlineGateway) {
+                return $this->errorResponse('Payment method does not support link recovery', 400);
+            }
+
+            // Handle different payment states
+            if ($payment->isSessionValid()) {
+                // Session is valid, return existing payment URL
+                return $this->successResponse([
+                    'status' => 'valid',
+                    'payment_id' => $payment->id,
+                    'payment_url' => $payment->getPaymentUrl(),
+                    'order_id' => $order->id,
+                    'amount' => $payment->amount,
+                    'order_number' => $order->order_number,
+                    'payment_method' => $payment->payment_method,
+                    'expires_at' => $payment->session_expires_at,
+                ], 'Payment link is still valid');
+            } elseif ($payment->isSessionExpired()) {
+                // Session expired, create new payment session
+                $payment->markSessionAsUsed();
+
+                // Create new payment record with new session
+                $newPayment = $this->createNewPaymentSession($order, $payment->payment_method);
+
+                return $this->successResponse([
+                    'status' => 'renewed',
+                    'payment_id' => $newPayment->id,
+                    'payment_url' => $newPayment->getPaymentUrl(),
+                    'order_id' => $order->id,
+                    'amount' => $newPayment->amount,
+                    'order_number' => $order->order_number,
+                    'payment_method' => $newPayment->payment_method,
+                    'expires_at' => $newPayment->session_expires_at,
+                ], 'Payment link has been renewed due to expiration');
+            } else {
+                return $this->errorResponse('Payment session is invalid or expired', 400);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Get payment link failed: ' . $e->getMessage());
+            return $this->serverErrorResponse('Failed to get payment link', $e->getMessage());
+        }
+    }
+
+    /**
+     * Create new payment session for order
+     */
+    private function createNewPaymentSession(Order $order, string $paymentMethod): Payment
+    {
+        // Create payment record
+        $payment = Payment::create([
+            'user_id' => $order->user_id,
+            'order_id' => $order->id,
+            'amount' => $order->total_amount,
+            'payment_method' => $paymentMethod,
+            'payment_provider' => $paymentMethod,
+            'status' => 'pending',
+        ]);
+
+        // Generate session token for online gateway payments
+        if (in_array($paymentMethod, ['vnpay', 'momo', 'credit_card', 'debit_card'])) {
+            $payment->generateSessionToken(30); // 30 minutes expiration
+        }
+
+        // Create transaction record
+        $this->vnpayService->createTransaction($payment);
+
+        // Generate payment URL for VNPay (or other gateways)
+        if (in_array($paymentMethod, ['vnpay', 'momo', 'credit_card', 'debit_card'])) {
+            $vnpayParams = [
+                'vnp_Amount' => $this->vnpayService->formatAmount((float) $order->total_amount),
+                'vnp_OrderInfo' => $this->vnpayService->generateOrderInfo($order->order_number),
+                'vnp_TxnRef' => $payment->id,
+                'vnp_ReturnUrl' => config('vnpay.return_url'),
+            ];
+
+            $paymentUrl = $this->vnpayService->createPaymentUrl($vnpayParams);
+
+            // Update payment with gateway response
+            $payment->update([
+                'gateway_response' => [
+                    'payment_url' => $paymentUrl,
+                    'gateway_params' => $vnpayParams,
+                    'created_at' => now()->toISOString(),
+                ]
+            ]);
+        }
+
+        return $payment;
     }
 
     /**

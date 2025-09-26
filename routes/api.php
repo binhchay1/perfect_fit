@@ -144,6 +144,7 @@ Route::middleware('auth:api')->group(function () {
 Route::middleware('auth:api')->group(function () {
     Route::post('/payment/create', [PaymentController::class, 'createPayment']);
     Route::get('/payment/status', [PaymentController::class, 'getPaymentStatus']);
+    Route::get('/orders/{order_id}/payment-link', [PaymentController::class, 'getPaymentLink']);
 });
 
 // Payment callback routes (Public - VNPay will call these)

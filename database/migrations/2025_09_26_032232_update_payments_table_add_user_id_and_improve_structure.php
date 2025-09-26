@@ -27,10 +27,17 @@ return new class extends Migration
             // Add payment notes
             $table->text('notes')->nullable()->after('gateway_response');
 
+            // Add payment session fields for handling interrupted payments
+            $table->string('session_token')->nullable()->after('notes');
+            $table->timestamp('session_expires_at')->nullable()->after('session_token');
+            $table->boolean('session_used')->default(false)->after('session_expires_at');
+
             // Update indexes
             $table->index(['user_id', 'status']);
             $table->index(['payment_method', 'status']);
             $table->index('external_payment_id');
+            $table->index(['session_token', 'session_expires_at']);
+            $table->index('session_used');
         });
     }
 
@@ -41,7 +48,7 @@ return new class extends Migration
     {
         Schema::table('payments', function (Blueprint $table) {
             $table->dropForeign(['user_id']);
-            $table->dropColumn(['user_id', 'payment_provider', 'external_payment_id', 'notes']);
+            $table->dropColumn(['user_id', 'payment_provider', 'external_payment_id', 'notes', 'session_token', 'session_expires_at', 'session_used']);
             $table->enum('payment_method', ['vnpay', 'momo', 'bank_transfer', 'cod'])->change();
         });
     }

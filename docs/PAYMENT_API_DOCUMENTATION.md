@@ -39,15 +39,22 @@ The payment system uses the following database structure:
 **Tables:**
 - `users` - Customer information
 - `orders` - Order data
-- `payments` - Payment method and status
+- `payments` - Payment method and status (includes session management)
 - `transactions` - Money flow tracking (payments, refunds, adjustments)
 - `payment_callbacks` - Gateway callback logs for auditing
+- `payment_logs` - Detailed payment activities
 
 **Key Relationships:**
 - User can have many orders
 - Order can have many payments
 - Payment can have many transactions
 - Transactions track money flow (payment, refund, adjustment)
+
+**Payment Session Management:**
+- Each payment for online gateways has a session_token for security
+- session_expires_at tracks when payment link expires (30 minutes by default)
+- session_used tracks if payment session has been used
+- System handles session renewal for interrupted payments
 
 ### Frontend Integration
 
@@ -178,7 +185,109 @@ OTP: 123456
 
 ---
 
-### 2. Get Payment Status
+### 2. Get Payment Link (Recover Lost Payment)
+
+**Endpoint:** `GET /api/orders/{order_id}/payment-link`
+
+**Description:** Recovers payment link for interrupted payment flows. Handles cases where user closes app or loses payment URL.
+
+**Authentication:** Required (Bearer Token)
+
+**Path Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| order_id | integer | Yes | ID of the order to recover payment link |
+
+**Response Examples:**
+
+**Success (200) - Valid Payment Link:**
+
+```json
+{
+    "success": true,
+    "message": "Payment link is still valid",
+    "data": {
+        "status": "valid",
+        "payment_id": 1,
+        "payment_url": "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_Amount=17160000&vnp_Command=pay&vnp_CreateDate=20250912161530&vnp_CurrCode=VND&vnp_IpAddr=127.0.0.1&vnp_Locale=vn&vnp_OrderInfo=TEST-1757668551&vnp_ReturnUrl=http://localhost:8000/api/payment/vnpay/callback&vnp_TmnCode=1QUQF2FW&vnp_TxnRef=1&vnp_Version=2.1.0&vnp_SecureHash=abc123...",
+        "order_id": 17,
+        "amount": 17160000,
+        "order_number": "TEST-1757668551",
+        "payment_method": "vnpay",
+        "expires_at": "2025-09-12T16:45:30.000000Z"
+    }
+}
+```
+
+**Success (200) - Renewed Payment Link (Expired):**
+
+```json
+{
+    "success": true,
+    "message": "Payment link has been renewed due to expiration",
+    "data": {
+        "status": "renewed",
+        "payment_id": 2,
+        "payment_url": "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_Amount=17160000&vnp_Command=pay&vnp_CreateDate=20250912162000&vnp_CurrCode=VND&vnp_IpAddr=127.0.0.1&vnp_Locale=vn&vnp_OrderInfo=TEST-1757668551&vnp_ReturnUrl=http://localhost:8000/api/payment/vnpay/callback&vnp_TmnCode=1QUQF2FW&vnp_TxnRef=2&vnp_Version=2.1.0&vnp_SecureHash=xyz456...",
+        "order_id": 17,
+        "amount": 17160000,
+        "order_number": "TEST-1757668551",
+        "payment_method": "vnpay",
+        "expires_at": "2025-09-12T16:50:00.000000Z"
+    }
+}
+```
+
+**Success (200) - Payment Already Completed:**
+
+```json
+{
+    "success": true,
+    "message": "Payment already completed",
+    "data": {
+        "status": "paid",
+        "payment_id": 1,
+        "order_id": 17,
+        "order_number": "TEST-1757668551",
+        "amount": 17160000,
+        "payment_method": "vnpay"
+    }
+}
+```
+
+**Error (404) - Order Not Found:**
+
+```json
+{
+    "success": false,
+    "message": "Order not found or access denied",
+    "data": null
+}
+```
+
+**Error (400) - No Pending Payment:**
+
+```json
+{
+    "success": false,
+    "message": "No pending payment found for this order",
+    "data": null
+}
+```
+
+**Error (400) - Payment Method Not Supported:**
+
+```json
+{
+    "success": false,
+    "message": "Payment method does not support link recovery",
+    "data": null
+}
+```
+
+---
+
+### 3. Get Payment Status
 
 **Endpoint:** `GET /api/payment/status`
 
@@ -388,6 +497,35 @@ const checkPaymentStatus = async (paymentId) => {
     const data = await response.json();
     return data.data;
 };
+
+// Recover payment link for interrupted payments
+const recoverPaymentLink = async (orderId) => {
+    const response = await fetch(`/api/orders/${orderId}/payment-link`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    const data = await response.json();
+    if (data.success) {
+        if (data.data.status === 'valid') {
+            // Payment link is still valid, redirect to it
+            window.location.href = data.data.payment_url;
+        } else if (data.data.status === 'renewed') {
+            // Payment link renewed, redirect to new URL
+            window.location.href = data.data.payment_url;
+        } else if (data.data.status === 'paid') {
+            // Payment already completed
+            console.log('Payment already completed');
+            // Handle success case
+        } else {
+            // Handle other cases (failed, cancelled, etc.)
+            console.log('Payment status:', data.data.status);
+        }
+    } else {
+        console.error('Failed to recover payment link:', data.message);
+    }
+};
 ```
 
 ### PHP (Backend)
@@ -467,7 +605,8 @@ Payment activities are logged in:
 2. User requests payment (specifies payment method)
 3. System creates payment record
 4. System creates transaction record
-5. If online gateway (VNPay, MoMo, etc.):
+5. System generates payment session with token and expiration (for online gateways)
+6. If online gateway (VNPay, MoMo, etc.):
    - System generates gateway URL
    - User redirected to gateway
    - User completes payment
@@ -477,10 +616,24 @@ Payment activities are logged in:
    - System updates order status
    - System deducts stock
    - System redirects to frontend with result
-6. If offline payment (Cash, Bank Transfer):
+7. If offline payment (Cash, Bank Transfer):
    - System marks as pending or completed
    - Admin processes payment manually
    - System updates status when confirmed
+```
+
+### Payment Link Recovery Flow (Interrupted Payments)
+
+```
+1. User creates order and starts payment process
+2. User gets redirected to payment gateway but closes app/loses link
+3. User returns to app and requests payment link recovery
+4. System checks payment session status:
+   - If session valid: Returns existing payment URL
+   - If session expired: Creates new payment session and returns new URL
+   - If already paid: Returns payment completion info
+   - If failed/cancelled: Returns status and guidance
+5. User can continue with payment using recovered/renewed link
 ```
 
 ### Frontend Integration Flow
