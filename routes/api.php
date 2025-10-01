@@ -12,6 +12,8 @@ use App\Http\Controllers\API\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\API\Admin\UserController as AdminUserController;
 use App\Http\Controllers\API\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\API\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\API\Admin\ShippingSettingsController as AdminShippingSettingsController;
+use App\Http\Controllers\API\Admin\ShippingCarrierController as AdminShippingCarrierController;
 use App\Http\Controllers\API\PaymentController;
 use Illuminate\Support\Facades\Route;
 
@@ -107,6 +109,19 @@ Route::prefix('admin')->middleware(['auth:api', 'admin'])->group(function () {
     Route::delete('/product/{id}', [AdminProductController::class, 'destroy']);
     Route::post('/product/{id}/toggle-status', [AdminProductController::class, 'toggleStatus']);
     Route::delete('/products/bulk-delete', [AdminProductController::class, 'bulkDelete']);
+
+    // Shipping Settings management
+    Route::get('/shipping/settings', [AdminShippingSettingsController::class, 'getSettings']);
+    Route::post('/shipping/settings', [AdminShippingSettingsController::class, 'updateSettings']);
+
+
+    // Shipping Carriers management
+    Route::get('/shipping/carriers/domestic', [AdminShippingCarrierController::class, 'getDomesticCarriers']);
+    Route::get('/shipping/carriers/inter-province', [AdminShippingCarrierController::class, 'getInterProvinceCarriers']);
+    Route::post('/shipping/carrier', [AdminShippingCarrierController::class, 'createCarrier']);
+    Route::post('/shipping/carrier/{id}', [AdminShippingCarrierController::class, 'updateCarrier']);
+    Route::post('/shipping/carrier/{id}/set-default', [AdminShippingCarrierController::class, 'setAsDefault']);
+   
 });
 
 // Cart routes (Protected - User must be logged in)
