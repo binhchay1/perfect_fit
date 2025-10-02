@@ -148,6 +148,13 @@ class PaymentController extends Controller
                     'status' => 'pending',
                 ]);
 
+                // Log payment creation
+                $payment->addLog('pending', 'Payment created for order', [
+                    'order_id' => $order->id,
+                    'payment_method' => $paymentMethodIdentifier,
+                    'amount' => $order->total_amount,
+                ]);
+
                 // Generate session token for online gateway payments (30 minutes expiration)
                 if (in_array($paymentMethodIdentifier, ['vnpay', 'momo', 'credit_card', 'debit_card'])) {
                     $payment->generateSessionToken(30);
@@ -175,6 +182,13 @@ class PaymentController extends Controller
                             'gateway_params' => $vnpayParams,
                             'created_at' => now()->toISOString(),
                         ]
+                    ]);
+
+                    // Log gateway payment URL generation
+                    $payment->addLog('gateway_url_generated', 'Payment gateway URL generated', [
+                        'payment_url' => $paymentUrl,
+                        'gateway' => $paymentMethodIdentifier,
+                        'amount' => $order->total_amount,
                     ]);
 
                     DB::commit();
@@ -212,6 +226,12 @@ class PaymentController extends Controller
 
                         // Deduct stock
                         $this->deductStockForOrder($order);
+
+                        // Log payment completion
+                        $payment->addLog('paid', 'Cash payment completed successfully', [
+                            'transaction_id' => $transaction->id,
+                            'order_status_updated' => true,
+                        ]);
                     }
 
                     DB::commit();
@@ -357,12 +377,25 @@ class PaymentController extends Controller
                 // Deduct stock
                 $this->deductStockForOrder($payment->order);
 
+                // Log payment success
+                $payment->addLog('paid', 'Payment successful via gateway callback', [
+                    'gateway_transaction_id' => $gatewayTransactionId,
+                    'gateway' => 'vnpay',
+                    'order_status_updated' => true,
+                ]);
+
                 Log::info('Payment successful', [
                     'payment_id' => $payment->id,
                     'order_id' => $payment->order_id,
                     'transaction_id' => $gatewayTransactionId
                 ]);
             } else {
+                // Log payment failure
+                $payment->addLog('failed', 'Payment failed via gateway callback', [
+                    'gateway' => 'vnpay',
+                    'failure_reason' => $message,
+                ]);
+
                 Log::info('Payment failed', [
                     'payment_id' => $payment->id,
                     'order_id' => $payment->order_id,
@@ -614,10 +647,17 @@ class PaymentController extends Controller
                 ], 'Payment link is still valid');
             } elseif ($payment->isSessionExpired()) {
                 // Session expired, create new payment session
-                $payment->markSessionAsUsed();
+                $payment->markSessionAsUsed(); // This will log the session usage
 
                 // Create new payment record with new session
                 $newPayment = $this->createNewPaymentSession($order, $payment->payment_method);
+
+                // Log new payment creation
+                $newPayment->addLog('pending', 'New payment session created due to expiration', [
+                    'original_payment_id' => $payment->id,
+                    'payment_method' => $payment->payment_method,
+                    'amount' => $order->total_amount,
+                ]);
 
                 return $this->successResponse([
                     'status' => 'renewed',
@@ -652,6 +692,13 @@ class PaymentController extends Controller
             'payment_method' => $paymentMethod,
             'payment_provider' => $paymentMethod,
             'status' => 'pending',
+        ]);
+
+        // Log payment creation
+        $payment->addLog('pending', 'Payment session renewed', [
+            'order_id' => $order->id,
+            'payment_method' => $paymentMethod,
+            'amount' => $order->total_amount,
         ]);
 
         // Generate session token for online gateway payments

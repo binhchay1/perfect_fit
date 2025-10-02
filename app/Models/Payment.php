@@ -119,6 +119,12 @@ class Payment extends Model
             'transaction_id' => $transactionId,
             'paid_at' => now(),
         ]);
+
+        // Log the status change
+        $this->addLog('paid', 'Payment marked as paid', [
+            'transaction_id' => $transactionId,
+            'paid_at' => now()->toISOString(),
+        ]);
     }
 
     /**
@@ -129,6 +135,9 @@ class Payment extends Model
         $this->update([
             'status' => 'failed',
         ]);
+
+        // Log the status change
+        $this->addLog('failed', 'Payment marked as failed');
     }
 
     /**
@@ -139,6 +148,9 @@ class Payment extends Model
         $this->update([
             'status' => 'refunded',
         ]);
+
+        // Log the status change
+        $this->addLog('refunded', 'Payment marked as refunded');
     }
 
     /**
@@ -192,6 +204,9 @@ class Payment extends Model
         $this->update([
             'session_used' => true,
         ]);
+
+        // Log the session usage
+        $this->addLog('session_used', 'Payment session marked as used');
     }
 
     /**

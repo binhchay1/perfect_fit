@@ -196,6 +196,22 @@ class VnpayService
                 'paid_at' => $paymentStatus === 'paid' ? now() : null,
             ]);
 
+            // Log the status change
+            if ($paymentStatus === 'paid') {
+                $payment->addLog('paid', 'Payment status updated via VNPay callback', [
+                    'gateway_transaction_id' => $vnpTransactionNo,
+                    'gateway' => 'vnpay',
+                    'response_code' => $vnpResponseCode,
+                ]);
+            } else {
+                $payment->addLog('failed', 'Payment status updated via VNPay callback', [
+                    'gateway_transaction_id' => $vnpTransactionNo,
+                    'gateway' => 'vnpay',
+                    'response_code' => $vnpResponseCode,
+                    'failure_message' => $paymentMessage,
+                ]);
+            }
+
             // Update or create transaction
             $transaction = Transaction::where('payment_id', $payment->id)
                 ->where('type', 'payment')
