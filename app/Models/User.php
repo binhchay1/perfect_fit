@@ -35,6 +35,8 @@ class User extends Authenticatable
         'email_verified_at',
         'facebook_id',
         'google_id',
+        'tiktok_id',
+        'avatar_url',
     ];
 
     /**
@@ -102,6 +104,30 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the devices for the user.
+     */
+    public function devices()
+    {
+        return $this->hasMany(UserDevice::class);
+    }
+
+    /**
+     * Get active devices for the user.
+     */
+    public function activeDevices()
+    {
+        return $this->hasMany(UserDevice::class)->where('is_active', true);
+    }
+
+    /**
+     * Get trusted devices for the user.
+     */
+    public function trustedDevices()
+    {
+        return $this->hasMany(UserDevice::class)->where('is_trusted', true);
+    }
+
+    /**
      * Check if user is admin.
      */
     public function isAdmin(): bool
@@ -115,5 +141,25 @@ class User extends Authenticatable
     public function isUser(): bool
     {
         return $this->role === 'user' || $this->role === null;
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(ProductReview::class);
+    }
+
+    public function paymentAccounts()
+    {
+        return $this->hasMany(PaymentAccount::class);
+    }
+
+    public function bodyMeasurements()
+    {
+        return $this->hasOne(UserBodyMeasurement::class);
+    }
+
+    public function orderReturns()
+    {
+        return $this->hasMany(OrderReturn::class);
     }
 }

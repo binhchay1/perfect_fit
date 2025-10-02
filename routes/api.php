@@ -7,6 +7,12 @@ use App\Http\Controllers\API\ProductController;
 use App\Http\Controllers\API\CartController;
 use App\Http\Controllers\API\WishlistController;
 use App\Http\Controllers\API\OrderController;
+use App\Http\Controllers\API\DeviceController;
+use App\Http\Controllers\API\ProductReviewController;
+use App\Http\Controllers\API\PerfectFitController;
+use App\Http\Controllers\API\OrderReturnController;
+use App\Http\Controllers\API\SocialAuthController;
+use App\Http\Controllers\API\OtpController;
 use App\Http\Controllers\API\Admin\BrandController as AdminBrandController;
 use App\Http\Controllers\API\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\API\Admin\UserController as AdminUserController;
@@ -14,6 +20,8 @@ use App\Http\Controllers\API\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\API\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\API\Admin\ShippingSettingsController as AdminShippingSettingsController;
 use App\Http\Controllers\API\Admin\ShippingCarrierController as AdminShippingCarrierController;
+use App\Http\Controllers\API\Admin\PaymentAccountController as AdminPaymentAccountController;
+use App\Http\Controllers\API\Admin\OrderReturnController as AdminOrderReturnController;
 use App\Http\Controllers\API\PaymentController;
 use Illuminate\Support\Facades\Route;
 
@@ -34,6 +42,16 @@ Route::post('/auth/register', [AuthController::class, 'register']);
 Route::get('/auth/verify/{token}', [AuthController::class, 'verifyAccount']);
 Route::post('/auth/verify/resend', [AuthController::class, 'resendVerifyAccount']);
 
+// Social Authentication routes (Public)
+Route::post('/auth/social/google', [SocialAuthController::class, 'googleLogin']);
+Route::post('/auth/social/facebook', [SocialAuthController::class, 'facebookLogin']);
+Route::post('/auth/social/tiktok', [SocialAuthController::class, 'tiktokLogin']);
+
+// OTP Authentication routes (Public)
+Route::post('/auth/phone/send-otp', [OtpController::class, 'sendOtp']);
+Route::post('/auth/phone/verify-otp', [OtpController::class, 'verifyOtpAndLogin']);
+Route::post('/auth/phone/resend-otp', [OtpController::class, 'resendOtp']);
+
 // Protected authentication routes
 Route::middleware('auth:api')->group(function () {
     Route::post('/auth/token/refresh', [AuthController::class, 'refreshToken']);
@@ -51,6 +69,41 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/change-password', [UserController::class, 'changePassword']);
 });
 
+// Device management routes
+Route::middleware('auth:api')->group(function () {
+    Route::get('/devices', [DeviceController::class, 'index']);
+    Route::put('/devices/{deviceId}/name', [DeviceController::class, 'updateName']);
+    Route::post('/devices/{deviceId}/trust', [DeviceController::class, 'toggleTrust']);
+    Route::delete('/devices/{deviceId}', [DeviceController::class, 'revoke']);
+    Route::post('/devices/revoke-others', [DeviceController::class, 'revokeAllOthers']);
+    Route::put('/devices/fcm-token', [DeviceController::class, 'updateFcmToken']);
+});
+
+// Product Reviews (Protected - creating, updating, deleting)
+Route::middleware('auth:api')->group(function () {
+    Route::post('/products/{productId}/reviews', [ProductReviewController::class, 'store']);
+    Route::put('/reviews/{id}', [ProductReviewController::class, 'update']);
+    Route::delete('/reviews/{id}', [ProductReviewController::class, 'destroy']);
+    Route::post('/reviews/{id}/react', [ProductReviewController::class, 'react']);
+});
+
+// Perfect Fit AI routes
+Route::middleware('auth:api')->group(function () {
+    Route::get('/user/body-measurements', [PerfectFitController::class, 'getMeasurements']);
+    Route::post('/user/body-measurements', [PerfectFitController::class, 'saveMeasurements']);
+    Route::delete('/user/body-measurements', [PerfectFitController::class, 'deleteMeasurements']);
+    Route::post('/products/{productId}/size-recommend', [PerfectFitController::class, 'recommendFromMeasurements']);
+    Route::post('/products/{productId}/size-recommend-from-image', [PerfectFitController::class, 'recommendFromImage']);
+});
+
+// Order Returns routes
+Route::middleware('auth:api')->group(function () {
+    Route::get('/returns', [OrderReturnController::class, 'index']);
+    Route::post('/orders/{orderId}/return', [OrderReturnController::class, 'store']);
+    Route::get('/returns/{returnCode}', [OrderReturnController::class, 'show']);
+    Route::post('/returns/{id}/cancel', [OrderReturnController::class, 'cancel']);
+});
+
 // Brand routes (Public)
 Route::get('/brands', [BrandController::class, 'index']);
 Route::get('/brand/with-products', [BrandController::class, 'getWithProducts']);
@@ -65,6 +118,9 @@ Route::get('/products/filters', [ProductController::class, 'getWithFilters']);
 Route::get('/product/brand/{brandId}', [ProductController::class, 'getByBrand']);
 Route::get('/product/gender/{gender}', [ProductController::class, 'getByGender']);
 Route::get('/product/{product}', [ProductController::class, 'showBySlug']);
+
+// Product Reviews (Public - viewing)
+Route::get('/products/{productId}/reviews', [ProductReviewController::class, 'index']);
 
 // Admin routes (Admin only)
 Route::prefix('admin')->middleware(['auth:api', 'admin'])->group(function () {
@@ -121,7 +177,18 @@ Route::prefix('admin')->middleware(['auth:api', 'admin'])->group(function () {
     Route::post('/shipping/carrier', [AdminShippingCarrierController::class, 'createCarrier']);
     Route::post('/shipping/carrier/{id}', [AdminShippingCarrierController::class, 'updateCarrier']);
     Route::post('/shipping/carrier/{id}/set-default', [AdminShippingCarrierController::class, 'setAsDefault']);
-   
+
+    // Payment Accounts management
+    Route::get('/payment-accounts', [AdminPaymentAccountController::class, 'index']);
+    Route::post('/payment-accounts', [AdminPaymentAccountController::class, 'store']);
+    Route::put('/payment-accounts/{id}', [AdminPaymentAccountController::class, 'update']);
+    Route::delete('/payment-accounts/{id}', [AdminPaymentAccountController::class, 'destroy']);
+    Route::post('/payment-accounts/{id}/set-default', [AdminPaymentAccountController::class, 'setDefault']);
+    Route::post('/payment-accounts/{id}/toggle-status', [AdminPaymentAccountController::class, 'toggleStatus']);
+
+    // Order Returns management
+    Route::get('/returns', [AdminOrderReturnController::class, 'index']);
+    Route::put('/returns/{id}/status', [AdminOrderReturnController::class, 'updateStatus']);
 });
 
 // Cart routes (Protected - User must be logged in)

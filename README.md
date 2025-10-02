@@ -130,6 +130,53 @@ The Swagger UI provides:
 - Request/response examples
 - Authentication testing
 
+### Available API Modules
+
+The application includes comprehensive API modules:
+
+#### **Core APIs**
+- ✅ **Authentication** - Login, Register, Email Verification, Password Reset
+- ✅ **Social Auth** - Google, Facebook, Tiktok OAuth
+- ✅ **OTP** - Phone number verification and login
+- ✅ **User Management** - Profile, Change Password
+- ✅ **Device Management** - Multi-device session tracking
+
+#### **E-Commerce APIs**
+- ✅ **Products** - CRUD, Search, Filters, by Brand/Gender
+- ✅ **Brands** - Listing, Search, with Products
+- ✅ **Cart** - Add, Update, Remove, Summary
+- ✅ **Wishlist** - Add, Remove, Check, Count
+- ✅ **Orders** - Create, List, Detail, Cancel, Tracking
+- ✅ **Payment** - VNPay, COD, Payment Links
+- ✅ **Shipping** - Carriers, Settings, Calculation
+
+#### **Advanced Features**
+- ✅ **Product Reviews** - Rating, Comments, Like/Dislike
+- ✅ **Perfect Fit AI** - AI-powered size recommendation
+- ✅ **Order Returns** - Return/Refund requests
+- ✅ **Payment Accounts** - Bank account management (Admin)
+
+#### **Admin Panel APIs**
+- ✅ **Dashboard** - Analytics, Statistics, Reports
+- ✅ **User Management** - CRUD, Status, Statistics
+- ✅ **Order Management** - Status, Tracking, Refunds
+- ✅ **Product Management** - CRUD, Bulk operations
+- ✅ **Brand Management** - CRUD, Status
+- ✅ **Shipping Management** - Carriers, Settings
+- ✅ **Payment Accounts** - Bank accounts setup
+- ✅ **Return Management** - Approve/Reject returns
+
+### Documentation Files
+
+Detailed documentation for each module is available in the `docs/` folder:
+- `DEVICE_MANAGEMENT_API_DOCUMENTATION.md`
+- `PRODUCT_REVIEWS_API_DOCUMENTATION.md`
+- `PERFECT_FIT_AI_API_DOCUMENTATION.md`
+- `ORDER_RETURNS_API_DOCUMENTATION.md`
+- `PAYMENT_ACCOUNTS_API_DOCUMENTATION.md`
+- `SOCIAL_AUTH_OTP_API_DOCUMENTATION.md`
+- And more...
+
 ## 🔐 Authentication
 
 This API uses **Laravel Passport** for authentication:
@@ -190,6 +237,13 @@ php artisan route:list
 | `L5_SWAGGER_UI_DOC_EXPANSION` | Swagger UI default expansion | `none` |
 | `DB_*` | Database connection settings | - |
 | `MAIL_*` | Email service configuration | - |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID | - |
+| `FACEBOOK_CLIENT_ID` | Facebook OAuth app ID | - |
+| `TIKTOK_CLIENT_KEY` | Tiktok OAuth client key | - |
+| `SMS_API_URL` | SMS service API URL | - |
+| `SMS_API_KEY` | SMS service API key | - |
+| `PERFECT_FIT_AI_URL` | AI service URL for size recommendation | - |
+| `PERFECT_FIT_AI_KEY` | AI service API key | - |
 
 ## 🚨 Troubleshooting
 
@@ -253,9 +307,56 @@ chmod -R 755 bootstrap/cache
 ```
 perfect_fit/
 ├── app/
+│   ├── Enums/                    # Enumerations & Constants
+│   │   ├── Users.php
+│   │   ├── UserDevice.php
+│   │   ├── PaymentAccount.php
+│   │   ├── ProductReview.php
+│   │   ├── BodyMeasurement.php
+│   │   ├── OrderReturn.php
+│   │   ├── SocialAuth.php
+│   │   ├── OTP.php
+│   │   └── Utility.php
 │   ├── Http/Controllers/API/
-│   │   ├── AuthController.php    # Authentication endpoints
-│   │   └── UserController.php    # User management endpoints
+│   │   ├── AuthController.php
+│   │   ├── SocialAuthController.php
+│   │   ├── OtpController.php
+│   │   ├── DeviceController.php
+│   │   ├── ProductController.php
+│   │   ├── ProductReviewController.php
+│   │   ├── PerfectFitController.php
+│   │   ├── BrandController.php
+│   │   ├── CartController.php
+│   │   ├── WishlistController.php
+│   │   ├── OrderController.php
+│   │   ├── OrderReturnController.php
+│   │   ├── PaymentController.php
+│   │   └── Admin/...              # Admin controllers
+│   ├── Models/
+│   │   ├── User.php
+│   │   ├── UserDevice.php
+│   │   ├── Product.php
+│   │   ├── ProductReview.php
+│   │   ├── ReviewReaction.php
+│   │   ├── UserBodyMeasurement.php
+│   │   ├── Order.php
+│   │   ├── OrderReturn.php
+│   │   ├── PaymentAccount.php
+│   │   └── ...
+│   ├── Repositories/              # Database queries
+│   │   ├── UserDeviceRepository.php
+│   │   ├── ProductReviewRepository.php
+│   │   ├── PaymentAccountRepository.php
+│   │   ├── OrderReturnRepository.php
+│   │   └── ...
+│   ├── Services/                  # Business logic
+│   │   ├── UserDeviceService.php
+│   │   ├── ProductReviewService.php
+│   │   ├── PerfectFitService.php
+│   │   ├── OrderReturnService.php
+│   │   ├── SocialAuthService.php
+│   │   ├── OtpService.php
+│   │   └── ...
 ├── config/
 │   └── l5-swagger.php            # Swagger configuration
 ├── routes/
@@ -281,6 +382,110 @@ This application uses Redis queues for handling email sending:
 2. **Queue worker** processes emails in background
 3. **Redis** stores queue jobs and handles job distribution
 4. Make sure both Redis and queue worker are running for emails to send
+
+## 📱 Device Management & Session Tracking
+
+The application includes comprehensive device management and session tracking capabilities:
+
+### Features
+
+- **Multi-Device Support**: Users can login from multiple devices simultaneously
+- **Device Tracking**: Track device information (type, model, OS version, app version)
+- **Session Management**: Monitor and manage active sessions across devices
+- **Trusted Devices**: Mark devices as trusted for enhanced security
+- **FCM Integration**: Support for Firebase Cloud Messaging tokens
+- **Device Revocation**: Ability to revoke access from specific devices or all devices
+
+### Device Information Tracked
+
+- Device ID (unique identifier)
+- Device name (user-friendly name)
+- Device type (iOS, Android, Web, Desktop, Tablet)
+- Device model
+- OS version
+- App version
+- FCM token (for push notifications)
+- IP address
+- User agent
+- Last used timestamp
+- Active status
+- Trusted status
+
+### API Endpoints
+
+#### Device Management
+- `GET /api/devices` - Get user's devices
+- `PUT /api/devices/{id}/name` - Update device name
+- `POST /api/devices/{id}/trust` - Toggle device trust status
+- `DELETE /api/devices/{id}` - Revoke/deactivate device
+- `POST /api/devices/revoke-others` - Revoke all other devices
+- `PUT /api/devices/fcm-token` - Update FCM token
+
+### Architecture
+
+The device management follows clean architecture principles:
+
+#### **Enum** (`app/Enums/UserDevice.php`)
+- Defines device types, statuses, and constants
+- Centralized configuration for device-related values
+
+#### **Model** (`app/Models/UserDevice.php`)
+- Defines table structure and relationships
+- Contains only data definition (no business logic)
+
+#### **Repository** (`app/Repositories/UserDeviceRepository.php`)
+- Handles all database queries
+- Provides data access layer
+- Methods for CRUD operations and complex queries
+
+#### **Service** (`app/Services/UserDeviceService.php`)
+- Contains business logic for device management
+- Orchestrates operations between repository and controllers
+- Handles device registration, updates, and revocation logic
+
+#### **Controller** (`app/Http/Controllers/API/DeviceController.php`)
+- Handles HTTP requests and responses
+- Uses service layer for business logic
+- Returns formatted API responses
+
+### Security Features
+
+1. **Session Isolation**: Each device maintains its own token
+2. **Selective Revocation**: Revoke specific devices without affecting others
+3. **Trust Management**: Enhanced security for untrusted devices
+4. **Activity Monitoring**: Track last used timestamp for security audits
+5. **IP Tracking**: Monitor device locations for suspicious activity
+
+### Usage Example
+
+#### Login with Device Information
+```bash
+POST /api/auth/login
+{
+  "email": "user@example.com",
+  "password": "password",
+  "device_id": "unique-device-id",
+  "device_name": "My iPhone",
+  "device_type": "ios",
+  "device_model": "iPhone 14 Pro",
+  "os_version": "17.0",
+  "app_version": "1.0.0",
+  "fcm_token": "fcm-token-here",
+  "remember_device": true
+}
+```
+
+#### Get All Devices
+```bash
+GET /api/devices
+Authorization: Bearer your_token_here
+```
+
+#### Revoke Device
+```bash
+DELETE /api/devices/{device_id}
+Authorization: Bearer your_token_here
+```
 
 ---
 

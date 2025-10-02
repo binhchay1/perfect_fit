@@ -6,16 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Jobs\SendEmail;
 use App\Models\User;
 use App\Models\UserVerify;
+use App\Services\UserDeviceService;
 use App\Traits\ApiResponseTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 /**
  * @OA\Info(
@@ -37,22 +38,34 @@ use Illuminate\Support\Facades\Cache;
  *     description="Enter your Bearer token in the format: Bearer <token>"
  * )
  */
-class AuthController extends Controller
+final class AuthController extends Controller
 {
     use ApiResponseTrait;
+
+    public function __construct(
+        private readonly UserDeviceService $deviceService
+    ) {}
 
     /**
      * @OA\Post(
      *     path="/auth/login",
-     *     summary="User login",
-     *     description="Authenticate user and return access token",
+     *     summary="User login with device tracking",
+     *     description="Authenticate user and return access token. Optionally register/update device information for session management",
      *     tags={"Authentication"},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
      *             required={"email","password"},
      *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
-     *             @OA\Property(property="password", type="string", format="password", example="password123")
+     *             @OA\Property(property="password", type="string", format="password", example="password123"),
+     *             @OA\Property(property="device_id", type="string", example="unique-device-id-123", description="Unique device identifier"),
+     *             @OA\Property(property="device_name", type="string", example="My iPhone 14", description="Device name"),
+     *             @OA\Property(property="device_type", type="string", example="ios", description="Device type (ios, android, web, desktop, tablet)"),
+     *             @OA\Property(property="device_model", type="string", example="iPhone 14 Pro", description="Device model"),
+     *             @OA\Property(property="os_version", type="string", example="17.0", description="OS version"),
+     *             @OA\Property(property="app_version", type="string", example="1.0.0", description="App version"),
+     *             @OA\Property(property="fcm_token", type="string", example="fcm-token-xyz", description="Firebase Cloud Messaging token"),
+     *             @OA\Property(property="remember_device", type="boolean", example=true, description="Mark device as trusted")
      *         )
      *     ),
      *     @OA\Response(
@@ -71,13 +84,18 @@ class AuthController extends Controller
      *                 ),
      *                 @OA\Property(property="token", type="string", example="1|abc123..."),
      *                 @OA\Property(property="token_type", type="string", example="Bearer"),
-     *                 @OA\Property(property="expires_at", type="string", format="date-time")
+     *                 @OA\Property(property="expires_at", type="string", format="date-time", example="2025-10-02T10:30:00.000000Z"),
+     *                 @OA\Property(property="device", type="object", nullable=true,
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="device_name", type="string", example="My iPhone 14"),
+     *                     @OA\Property(property="is_trusted", type="boolean", example=true)
+     *                 )
      *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="Invalid credentials",
+     *         description="Invalid credentials or account not active",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Invalid credentials")
@@ -100,6 +118,14 @@ class AuthController extends Controller
             $validator = Validator::make($request->all(), [
                 'email' => 'required|email',
                 'password' => 'required|string|min:6',
+                'device_id' => 'nullable|string|max:255',
+                'device_name' => 'nullable|string|max:255',
+                'device_type' => 'nullable|string|max:50',
+                'device_model' => 'nullable|string|max:100',
+                'os_version' => 'nullable|string|max:50',
+                'app_version' => 'nullable|string|max:20',
+                'fcm_token' => 'nullable|string|max:255',
+                'remember_device' => 'nullable|boolean',
             ]);
 
             if ($validator->fails()) {
@@ -116,13 +142,24 @@ class AuthController extends Controller
 
             /** @var \App\Models\User $user */
             $user = Auth::user();
+            
             // Check if user is active
             if ($user->status != 1) {
                 return $this->unauthorizedResponse('Account is not active');
             }
-    
 
-            $tokenResult = $user->createToken('Perfect Fit API');
+            $device = null;
+            if ($request->device_id) {
+                $device = $this->deviceService->registerOrUpdateDevice($user, $request);
+            }
+
+            $tokenName = $device ? "Perfect Fit API - {$device->device_name}" : 'Perfect Fit API';
+            $tokenResult = $user->createToken($tokenName);
+
+            if ($device) {
+                $this->deviceService->updateLastUsed($device);
+            }
+
             return $this->successResponse([
                 'user' => [
                     'id' => $user->id,
@@ -134,6 +171,11 @@ class AuthController extends Controller
                 'token' => $tokenResult->accessToken,
                 'token_type' => 'Bearer',
                 'expires_at' => $tokenResult->token->expires_at->toDateTimeString(),
+                'device' => $device ? [
+                    'id' => $device->id,
+                    'device_name' => $this->deviceService->getDisplayName($device),
+                    'is_trusted' => $device->is_trusted,
+                ] : null,
             ], 'Login successful');
         } catch (\Exception $e) {
             return $this->serverErrorResponse('Login failed', $e->getMessage());
@@ -371,6 +413,7 @@ class AuthController extends Controller
             return $this->serverErrorResponse('Failed to retrieve user details', $e->getMessage());
         }
     }
+
 
     /**
      * @OA\Get(

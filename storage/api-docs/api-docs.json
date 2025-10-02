@@ -1723,6 +1723,368 @@
                 ]
             }
         },
+        "/admin/returns": {
+            "get": {
+                "tags": [
+                    "Admin - Order Returns"
+                ],
+                "summary": "Get all return requests",
+                "description": "Get all return requests (admin only)",
+                "operationId": "1cc0d9b928e3ea8e27ef0975a4c49132",
+                "responses": {
+                    "200": {
+                        "description": "Returns retrieved successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/returns/{id}/status": {
+            "put": {
+                "tags": [
+                    "Admin - Order Returns"
+                ],
+                "summary": "Update return status",
+                "description": "Update the status of a return request",
+                "operationId": "dcca41bbf348d4dea6a78abda69cc34a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "approved",
+                                            "rejected",
+                                            "processing",
+                                            "completed",
+                                            "cancelled"
+                                        ]
+                                    },
+                                    "admin_notes": {
+                                        "type": "string"
+                                    },
+                                    "refund_amount": {
+                                        "type": "number"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Return status updated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/payment-accounts": {
+            "get": {
+                "tags": [
+                    "Admin - Payment Accounts"
+                ],
+                "summary": "Get all payment accounts",
+                "description": "Get all payment accounts for the shop/admin",
+                "operationId": "8c8ea63f9cf1f41503e7dd9e1cb95dcd",
+                "responses": {
+                    "200": {
+                        "description": "Payment accounts retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Payment accounts retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "bank_name": {
+                                                        "type": "string",
+                                                        "example": "Vietcombank"
+                                                    },
+                                                    "account_number": {
+                                                        "type": "string",
+                                                        "example": "**** **** 6557"
+                                                    },
+                                                    "account_holder_name": {
+                                                        "type": "string",
+                                                        "example": "Nguyễn Văn A"
+                                                    },
+                                                    "is_default": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Payment Accounts"
+                ],
+                "summary": "Create payment account",
+                "description": "Create a new payment account for receiving payments",
+                "operationId": "4c3483a12bd988de5cc21a6f70fe5fb5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "bank_name",
+                                    "account_number",
+                                    "account_holder_name"
+                                ],
+                                "properties": {
+                                    "bank_name": {
+                                        "type": "string",
+                                        "example": "Vietcombank"
+                                    },
+                                    "account_number": {
+                                        "type": "string",
+                                        "example": "1234567890"
+                                    },
+                                    "account_holder_name": {
+                                        "type": "string",
+                                        "example": "Nguyễn Văn A"
+                                    },
+                                    "bank_branch": {
+                                        "type": "string",
+                                        "example": "Chi nhánh HCM"
+                                    },
+                                    "swift_code": {
+                                        "type": "string",
+                                        "example": "BFTVVNVX"
+                                    },
+                                    "account_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "savings",
+                                            "checking",
+                                            "business"
+                                        ],
+                                        "example": "savings"
+                                    },
+                                    "is_default": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Tài khoản chính"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Payment account created successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/payment-accounts/{id}": {
+            "put": {
+                "tags": [
+                    "Admin - Payment Accounts"
+                ],
+                "summary": "Update payment account",
+                "description": "Update payment account information",
+                "operationId": "d0e287dd3c76b88c4e13822869f54e98",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "bank_name": {
+                                        "type": "string"
+                                    },
+                                    "account_number": {
+                                        "type": "string"
+                                    },
+                                    "account_holder_name": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Payment account updated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Payment Accounts"
+                ],
+                "summary": "Delete payment account",
+                "description": "Delete a payment account (cannot delete default account)",
+                "operationId": "7a57d314b981fb0ca6002d0c1f32589c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Payment account deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/payment-accounts/{id}/set-default": {
+            "post": {
+                "tags": [
+                    "Admin - Payment Accounts"
+                ],
+                "summary": "Set default payment account",
+                "description": "Set a payment account as default for receiving payments",
+                "operationId": "dd56832815a3322c2368f49071960b94",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Default payment account set successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/payment-accounts/{id}/toggle-status": {
+            "post": {
+                "tags": [
+                    "Admin - Payment Accounts"
+                ],
+                "summary": "Toggle payment account status",
+                "description": "Activate or deactivate a payment account",
+                "operationId": "3b6ce639abf43b716ca8aad1eb62bd1e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Account status toggled successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
         "/admin/users": {
             "get": {
                 "tags": [
@@ -2386,8 +2748,8 @@
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "User login",
-                "description": "Authenticate user and return access token",
+                "summary": "User login with device tracking",
+                "description": "Authenticate user and return access token. Optionally register/update device information for session management",
                 "operationId": "1ff9c65c5cd1a8e0786e318eed856972",
                 "requestBody": {
                     "required": true,
@@ -2408,6 +2770,46 @@
                                         "type": "string",
                                         "format": "password",
                                         "example": "password123"
+                                    },
+                                    "device_id": {
+                                        "description": "Unique device identifier",
+                                        "type": "string",
+                                        "example": "unique-device-id-123"
+                                    },
+                                    "device_name": {
+                                        "description": "Device name",
+                                        "type": "string",
+                                        "example": "My iPhone 14"
+                                    },
+                                    "device_type": {
+                                        "description": "Device type (ios, android, web, desktop, tablet)",
+                                        "type": "string",
+                                        "example": "ios"
+                                    },
+                                    "device_model": {
+                                        "description": "Device model",
+                                        "type": "string",
+                                        "example": "iPhone 14 Pro"
+                                    },
+                                    "os_version": {
+                                        "description": "OS version",
+                                        "type": "string",
+                                        "example": "17.0"
+                                    },
+                                    "app_version": {
+                                        "description": "App version",
+                                        "type": "string",
+                                        "example": "1.0.0"
+                                    },
+                                    "fcm_token": {
+                                        "description": "Firebase Cloud Messaging token",
+                                        "type": "string",
+                                        "example": "fcm-token-xyz"
+                                    },
+                                    "remember_device": {
+                                        "description": "Mark device as trusted",
+                                        "type": "boolean",
+                                        "example": true
                                     }
                                 },
                                 "type": "object"
@@ -2467,7 +2869,26 @@
                                                 },
                                                 "expires_at": {
                                                     "type": "string",
-                                                    "format": "date-time"
+                                                    "format": "date-time",
+                                                    "example": "2025-10-02T10:30:00.000000Z"
+                                                },
+                                                "device": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "device_name": {
+                                                            "type": "string",
+                                                            "example": "My iPhone 14"
+                                                        },
+                                                        "is_trusted": {
+                                                            "type": "boolean",
+                                                            "example": true
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
                                                 }
                                             },
                                             "type": "object"
@@ -2479,7 +2900,7 @@
                         }
                     },
                     "401": {
-                        "description": "Invalid credentials",
+                        "description": "Invalid credentials or account not active",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3898,6 +4319,628 @@
                 ]
             }
         },
+        "/devices": {
+            "get": {
+                "tags": [
+                    "Device Management"
+                ],
+                "summary": "Get user's devices",
+                "description": "Retrieve all devices associated with the authenticated user",
+                "operationId": "9e61c4b127cdc8b3f8c2aa9f430b2dda",
+                "parameters": [
+                    {
+                        "name": "X-Device-ID",
+                        "in": "header",
+                        "description": "Current device ID to mark as current",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "unique-device-id-123"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Devices retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Devices retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "device_name": {
+                                                        "type": "string",
+                                                        "example": "iPhone 14 Pro"
+                                                    },
+                                                    "device_type": {
+                                                        "type": "string",
+                                                        "example": "ios"
+                                                    },
+                                                    "device_model": {
+                                                        "type": "string",
+                                                        "example": "iPhone 14 Pro"
+                                                    },
+                                                    "os_version": {
+                                                        "type": "string",
+                                                        "example": "17.0"
+                                                    },
+                                                    "app_version": {
+                                                        "type": "string",
+                                                        "example": "1.0.0"
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "is_trusted": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "last_used_at": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2025-10-02T10:30:00.000000Z"
+                                                    },
+                                                    "is_current": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to retrieve devices"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/devices/{id}/name": {
+            "put": {
+                "tags": [
+                    "Device Management"
+                ],
+                "summary": "Update device name",
+                "description": "Update the name of a specific device",
+                "operationId": "76d6e6e8b2825291a097d059ce364e72",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Device ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "device_name"
+                                ],
+                                "properties": {
+                                    "device_name": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "My iPhone 14"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Device name updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Device name updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "device_name": {
+                                                    "type": "string",
+                                                    "example": "My iPhone 14"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Device not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Device not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation error"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/devices/{id}/trust": {
+            "post": {
+                "tags": [
+                    "Device Management"
+                ],
+                "summary": "Toggle device trust status",
+                "description": "Toggle the trusted status of a device (trusted/untrusted)",
+                "operationId": "433d4029887705ab808e0ef99c6ab405",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Device ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Device trust status updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Device marked as trusted"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "is_trusted": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Device not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Device not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/devices/{id}": {
+            "delete": {
+                "tags": [
+                    "Device Management"
+                ],
+                "summary": "Revoke/deactivate device",
+                "description": "Revoke a device and delete all associated tokens",
+                "operationId": "0ea5a632ae4ac607becb5191739adaa9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Device ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "X-Device-ID",
+                        "in": "header",
+                        "description": "Current device ID (cannot revoke current device)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "unique-device-id-123"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Device revoked successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Device revoked successfully"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Cannot revoke current device",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cannot revoke current device"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Device not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Device not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/devices/revoke-others": {
+            "post": {
+                "tags": [
+                    "Device Management"
+                ],
+                "summary": "Revoke all other devices",
+                "description": "Revoke all devices except the current one",
+                "operationId": "b45e1bc1486db9982b39522c8a1f580a",
+                "parameters": [
+                    {
+                        "name": "X-Device-ID",
+                        "in": "header",
+                        "description": "Current device ID (this device will not be revoked)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "unique-device-id-123"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "All other devices revoked successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "All other devices revoked successfully"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Current device ID not provided",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Current device ID not provided"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/devices/fcm-token": {
+            "put": {
+                "tags": [
+                    "Device Management"
+                ],
+                "summary": "Update FCM token",
+                "description": "Update Firebase Cloud Messaging token for push notifications",
+                "operationId": "d518736634f967af8f9189bb25efe4f6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "device_id",
+                                    "fcm_token"
+                                ],
+                                "properties": {
+                                    "device_id": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "unique-device-id-123"
+                                    },
+                                    "fcm_token": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "fcm-token-abc123xyz..."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "FCM token updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "FCM token updated successfully"
+                                        },
+                                        "data": {
+                                            "type": "null"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Device not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Device not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation error"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
         "/orders": {
             "get": {
                 "tags": [
@@ -4875,6 +5918,347 @@
                 ]
             }
         },
+        "/returns": {
+            "get": {
+                "tags": [
+                    "Order Returns"
+                ],
+                "summary": "Get user's return requests",
+                "description": "Retrieve all return requests for the authenticated user",
+                "operationId": "8b2cf370fe675d728151f134188b442e",
+                "responses": {
+                    "200": {
+                        "description": "Returns retrieved successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/orders/{orderId}/return": {
+            "post": {
+                "tags": [
+                    "Order Returns"
+                ],
+                "summary": "Create return request",
+                "description": "Create a return/refund request for an order",
+                "operationId": "35342d2ca886407b08005bd4462cb6fb",
+                "parameters": [
+                    {
+                        "name": "orderId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "return_type",
+                                    "reason",
+                                    "description"
+                                ],
+                                "properties": {
+                                    "return_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "return",
+                                            "refund",
+                                            "exchange"
+                                        ]
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "enum": [
+                                            "damaged",
+                                            "wrong_item",
+                                            "wrong_size",
+                                            "not_as_described",
+                                            "quality_issue",
+                                            "changed_mind",
+                                            "other"
+                                        ]
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Product is too small"
+                                    },
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Return request created successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/returns/{returnCode}": {
+            "get": {
+                "tags": [
+                    "Order Returns"
+                ],
+                "summary": "Get return request detail",
+                "description": "Get detailed information about a return request",
+                "operationId": "d6f8c4c5b16bd6b3acf3846803ff2278",
+                "parameters": [
+                    {
+                        "name": "returnCode",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Return details retrieved successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/returns/{id}/cancel": {
+            "post": {
+                "tags": [
+                    "Order Returns"
+                ],
+                "summary": "Cancel return request",
+                "description": "Cancel a pending return request",
+                "operationId": "d4eff7c5ff3180a91766d30eb9129819",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Return request cancelled successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/auth/phone/send-otp": {
+            "post": {
+                "tags": [
+                    "OTP Authentication"
+                ],
+                "summary": "Send OTP to phone",
+                "description": "Send OTP code to phone number for verification",
+                "operationId": "85401f113128d24625887483644bd5bd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone",
+                                    "purpose"
+                                ],
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0987654321"
+                                    },
+                                    "purpose": {
+                                        "type": "string",
+                                        "enum": [
+                                            "login",
+                                            "register",
+                                            "verify_phone",
+                                            "order_confirm",
+                                            "password_reset"
+                                        ],
+                                        "example": "login"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP sent successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "OTP sent successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "expires_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/phone/verify-otp": {
+            "post": {
+                "tags": [
+                    "OTP Authentication"
+                ],
+                "summary": "Verify OTP and login",
+                "description": "Verify OTP code and authenticate user",
+                "operationId": "cd6f9fd5ed71cd8a1a669579678d40db",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone",
+                                    "otp_code"
+                                ],
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0987654321"
+                                    },
+                                    "otp_code": {
+                                        "type": "string",
+                                        "example": "123456"
+                                    },
+                                    "purpose": {
+                                        "type": "string",
+                                        "example": "login"
+                                    },
+                                    "device_id": {
+                                        "type": "string"
+                                    },
+                                    "device_name": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP verified and login successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "token": {
+                                                    "type": "string"
+                                                },
+                                                "user": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/phone/resend-otp": {
+            "post": {
+                "tags": [
+                    "OTP Authentication"
+                ],
+                "summary": "Resend OTP",
+                "description": "Resend OTP code to phone number",
+                "operationId": "6d4161093f2a2a831c11047fd93a0239",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone",
+                                    "purpose"
+                                ],
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0987654321"
+                                    },
+                                    "purpose": {
+                                        "type": "string",
+                                        "example": "login"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP resent successfully"
+                    }
+                }
+            }
+        },
         "/payment/create": {
             "post": {
                 "tags": [
@@ -5468,6 +6852,337 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Order not found or access denied"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/user/body-measurements": {
+            "get": {
+                "tags": [
+                    "Perfect Fit AI"
+                ],
+                "summary": "Get user body measurements",
+                "description": "Retrieve saved body measurements for the authenticated user",
+                "operationId": "80a2b91a7efe652e45ba6bb49ac893f0",
+                "responses": {
+                    "200": {
+                        "description": "Measurements retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "height": {
+                                                    "type": "number",
+                                                    "example": 158
+                                                },
+                                                "weight": {
+                                                    "type": "number",
+                                                    "example": 47
+                                                },
+                                                "chest": {
+                                                    "type": "number",
+                                                    "example": 90
+                                                },
+                                                "waist": {
+                                                    "type": "number",
+                                                    "example": 60
+                                                },
+                                                "hips": {
+                                                    "type": "number",
+                                                    "example": 90
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Perfect Fit AI"
+                ],
+                "summary": "Save body measurements",
+                "description": "Save or update user's body measurements",
+                "operationId": "08630240a07354f19d6539616c3180a5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "gender",
+                                    "height",
+                                    "weight"
+                                ],
+                                "properties": {
+                                    "gender": {
+                                        "type": "string",
+                                        "enum": [
+                                            "male",
+                                            "female",
+                                            "unisex"
+                                        ],
+                                        "example": "female"
+                                    },
+                                    "height": {
+                                        "type": "number",
+                                        "example": 158
+                                    },
+                                    "weight": {
+                                        "type": "number",
+                                        "example": 47
+                                    },
+                                    "chest": {
+                                        "type": "number",
+                                        "example": 90
+                                    },
+                                    "waist": {
+                                        "type": "number",
+                                        "example": 60
+                                    },
+                                    "hips": {
+                                        "type": "number",
+                                        "example": 90
+                                    },
+                                    "preferred_fit": {
+                                        "type": "string",
+                                        "enum": [
+                                            "tight",
+                                            "regular",
+                                            "loose"
+                                        ],
+                                        "example": "regular"
+                                    },
+                                    "height_unit": {
+                                        "type": "string",
+                                        "enum": [
+                                            "cm",
+                                            "in"
+                                        ],
+                                        "example": "cm"
+                                    },
+                                    "weight_unit": {
+                                        "type": "string",
+                                        "enum": [
+                                            "kg",
+                                            "lbs"
+                                        ],
+                                        "example": "kg"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Measurements saved successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Perfect Fit AI"
+                ],
+                "summary": "Delete body measurements",
+                "description": "Delete user's saved body measurements",
+                "operationId": "8552027095cee43dc5a7436ea673919d",
+                "responses": {
+                    "200": {
+                        "description": "Measurements deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/products/{productId}/size-recommend-from-image": {
+            "post": {
+                "tags": [
+                    "Perfect Fit AI"
+                ],
+                "summary": "Get size recommendation from AI (Image)",
+                "description": "Upload user image and get AI-powered size recommendation",
+                "operationId": "ac2719a2fabcb74139cfe2739bec8d0c",
+                "parameters": [
+                    {
+                        "name": "productId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "image"
+                                ],
+                                "properties": {
+                                    "image": {
+                                        "description": "Base64 encoded image or image URL",
+                                        "type": "string"
+                                    },
+                                    "gender": {
+                                        "type": "string",
+                                        "enum": [
+                                            "male",
+                                            "female",
+                                            "unisex"
+                                        ]
+                                    },
+                                    "height": {
+                                        "type": "number",
+                                        "example": 158
+                                    },
+                                    "weight": {
+                                        "type": "number",
+                                        "example": 47
+                                    },
+                                    "fit_preference": {
+                                        "type": "string",
+                                        "enum": [
+                                            "tight",
+                                            "regular",
+                                            "loose"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Size recommendation from AI",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "recommended_size": {
+                                                    "type": "string",
+                                                    "example": "M"
+                                                },
+                                                "confidence": {
+                                                    "type": "string",
+                                                    "example": "high"
+                                                },
+                                                "fit_type": {
+                                                    "type": "string",
+                                                    "example": "Comfortable"
+                                                },
+                                                "measurements": {
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/products/{productId}/size-recommend": {
+            "post": {
+                "tags": [
+                    "Perfect Fit AI"
+                ],
+                "summary": "Get size recommendation from saved measurements",
+                "description": "Get AI-powered size recommendation using saved body measurements",
+                "operationId": "37d88c969793cc2f81ff5bf46c80a816",
+                "parameters": [
+                    {
+                        "name": "productId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Size recommendation from saved measurements",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "recommended_size": {
+                                                    "type": "string",
+                                                    "example": "S"
+                                                },
+                                                "confidence": {
+                                                    "type": "string",
+                                                    "example": "high"
+                                                },
+                                                "fit_type": {
+                                                    "type": "string",
+                                                    "example": "Fit Your Body"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -6262,6 +7977,337 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/products/{productId}/reviews": {
+            "get": {
+                "tags": [
+                    "Product Reviews"
+                ],
+                "summary": "Get product reviews",
+                "description": "Get all approved reviews for a product",
+                "operationId": "f3f2528f911c740259e241118af57f34",
+                "parameters": [
+                    {
+                        "name": "productId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reviews retrieved successfully"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Product Reviews"
+                ],
+                "summary": "Create product review",
+                "description": "Add a review for a product",
+                "operationId": "a762ef5e7eae94e6735cca71e924c8e3",
+                "parameters": [
+                    {
+                        "name": "productId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "rating",
+                                    "comment"
+                                ],
+                                "properties": {
+                                    "rating": {
+                                        "type": "integer",
+                                        "maximum": 5,
+                                        "minimum": 1,
+                                        "example": 5
+                                    },
+                                    "comment": {
+                                        "type": "string",
+                                        "example": "Great product!"
+                                    },
+                                    "order_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Review created successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/reviews/{id}": {
+            "put": {
+                "tags": [
+                    "Product Reviews"
+                ],
+                "summary": "Update review",
+                "description": "Update user's own review",
+                "operationId": "c165f177530632892e8e413585065561",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "rating": {
+                                        "type": "integer",
+                                        "maximum": 5,
+                                        "minimum": 1
+                                    },
+                                    "comment": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Review updated successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Product Reviews"
+                ],
+                "summary": "Delete review",
+                "description": "Delete user's own review",
+                "operationId": "429427f2fa7010a86c6254435d50f290",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Review deleted successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/reviews/{id}/react": {
+            "post": {
+                "tags": [
+                    "Product Reviews"
+                ],
+                "summary": "React to review",
+                "description": "Like or dislike a review",
+                "operationId": "243993bfa5b01466b4d3a7c1c6255ff3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reaction_type"
+                                ],
+                                "properties": {
+                                    "reaction_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "like",
+                                            "dislike"
+                                        ],
+                                        "example": "like"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Reaction added successfully"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/auth/social/google": {
+            "post": {
+                "tags": [
+                    "Social Authentication"
+                ],
+                "summary": "Google OAuth login",
+                "description": "Authenticate user with Google ID token",
+                "operationId": "02fd45c79e037eed9c5400d8d41f7ef4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "description": "Google ID token",
+                                        "type": "string"
+                                    },
+                                    "device_id": {
+                                        "type": "string"
+                                    },
+                                    "device_name": {
+                                        "type": "string"
+                                    },
+                                    "device_type": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful"
+                    }
+                }
+            }
+        },
+        "/auth/social/facebook": {
+            "post": {
+                "tags": [
+                    "Social Authentication"
+                ],
+                "summary": "Facebook OAuth login",
+                "description": "Authenticate user with Facebook access token",
+                "operationId": "3890bc214b7267181a0eaf132afc25be",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "description": "Facebook access token",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful"
+                    }
+                }
+            }
+        },
+        "/auth/social/tiktok": {
+            "post": {
+                "tags": [
+                    "Social Authentication"
+                ],
+                "summary": "Tiktok OAuth login",
+                "description": "Authenticate user with Tiktok access token",
+                "operationId": "3d4b1e33b022cf942e8f086020c1e600",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "token"
+                                ],
+                                "properties": {
+                                    "token": {
+                                        "description": "Tiktok access token",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful"
                     }
                 }
             }
@@ -7580,6 +9626,14 @@
             "description": "Admin order management operations"
         },
         {
+            "name": "Admin - Order Returns",
+            "description": "Admin order return management operations"
+        },
+        {
+            "name": "Admin - Payment Accounts",
+            "description": "Admin payment account management operations"
+        },
+        {
             "name": "Admin Users",
             "description": "Admin user management operations"
         },
@@ -7592,16 +9646,40 @@
             "description": "Shopping cart management operations"
         },
         {
+            "name": "Device Management",
+            "description": "User device and session management operations"
+        },
+        {
             "name": "Orders",
             "description": "Order management operations"
+        },
+        {
+            "name": "Order Returns",
+            "description": "Order return and refund request operations"
+        },
+        {
+            "name": "OTP Authentication",
+            "description": "Phone OTP verification and authentication"
         },
         {
             "name": "Payments",
             "description": "Payment processing operations"
         },
         {
+            "name": "Perfect Fit AI",
+            "description": "AI-powered size recommendation system"
+        },
+        {
             "name": "Products",
             "description": "Product management operations"
+        },
+        {
+            "name": "Product Reviews",
+            "description": "Product review and rating operations"
+        },
+        {
+            "name": "Social Authentication",
+            "description": "Social login operations (Google, Facebook, Tiktok)"
         },
         {
             "name": "User",

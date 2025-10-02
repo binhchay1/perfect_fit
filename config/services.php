@@ -21,6 +21,35 @@ return [
         'scheme' => 'https',
     ],
 
+    'perfect_fit_ai' => [
+        'url' => env('PERFECT_FIT_AI_URL', 'https://ai.perfectfit.com/api'),
+        'key' => env('PERFECT_FIT_AI_KEY', ''),
+    ],
+
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URL'),
+    ],
+
+    'facebook' => [
+        'client_id' => env('FACEBOOK_CLIENT_ID'),
+        'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
+        'redirect' => env('FACEBOOK_REDIRECT_URL'),
+    ],
+
+    'tiktok' => [
+        'client_key' => env('TIKTOK_CLIENT_KEY'),
+        'client_secret' => env('TIKTOK_CLIENT_SECRET'),
+        'redirect' => env('TIKTOK_REDIRECT_URL'),
+    ],
+
+    'sms' => [
+        'url' => env('SMS_API_URL', 'https://sms-api.com'),
+        'key' => env('SMS_API_KEY', ''),
+        'sender' => env('SMS_SENDER', 'PerfectFit'),
+    ],
+
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],
