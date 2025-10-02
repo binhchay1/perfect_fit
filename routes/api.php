@@ -9,7 +9,6 @@ use App\Http\Controllers\API\WishlistController;
 use App\Http\Controllers\API\OrderController;
 use App\Http\Controllers\API\DeviceController;
 use App\Http\Controllers\API\ProductReviewController;
-use App\Http\Controllers\API\PerfectFitController;
 use App\Http\Controllers\API\OrderReturnController;
 use App\Http\Controllers\API\SocialAuthController;
 use App\Http\Controllers\API\OtpController;
@@ -85,15 +84,6 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/reviews/{id}', [ProductReviewController::class, 'update']);
     Route::delete('/reviews/{id}', [ProductReviewController::class, 'destroy']);
     Route::post('/reviews/{id}/react', [ProductReviewController::class, 'react']);
-});
-
-// Perfect Fit AI routes
-Route::middleware('auth:api')->group(function () {
-    Route::get('/user/body-measurements', [PerfectFitController::class, 'getMeasurements']);
-    Route::post('/user/body-measurements', [PerfectFitController::class, 'saveMeasurements']);
-    Route::delete('/user/body-measurements', [PerfectFitController::class, 'deleteMeasurements']);
-    Route::post('/products/{productId}/size-recommend', [PerfectFitController::class, 'recommendFromMeasurements']);
-    Route::post('/products/{productId}/size-recommend-from-image', [PerfectFitController::class, 'recommendFromImage']);
 });
 
 // Order Returns routes
