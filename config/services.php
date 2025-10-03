@@ -26,10 +26,22 @@ return [
         'key' => env('PERFECT_FIT_AI_KEY', ''),
     ],
 
+    // Google OAuth (for Social Login)
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URL'),
+    ],
+
+    // Gmail OAuth2 (for Email Sending)
+    'gmail' => [
+        'client_id' => env('GOOGLE_MAIL_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_MAIL_CLIENT_SECRET'),
+        'refresh_token' => env('GOOGLE_MAIL_REFRESH_TOKEN'),
+        'from' => [
+            'address' => env('GOOGLE_MAIL_FROM', env('MAIL_FROM_ADDRESS')),
+            'name' => env('GOOGLE_MAIL_FROM_NAME', env('MAIL_FROM_NAME', 'Perfect Fit')),
+        ],
     ],
 
     'facebook' => [

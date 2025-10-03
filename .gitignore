@@ -18,3 +18,7 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+
+# Gmail OAuth temp files
+/get-gmail-token.php
+/gmail-env.txt
