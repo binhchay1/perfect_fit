@@ -2,29 +2,39 @@
 
 ## 📖 Danh Sách Tài Liệu
 
+### Authentication & Security
+1. 🔐 [**Authentication Guide**](./authentication.md) - Complete authentication system
+   - Email/Password with custom verification template
+   - Social Login (Google, Facebook, TikTok)
+   - Phone OTP (5 SMS providers: Twilio, Firebase, eSMS, SpeedSMS, Log)
+2. ⚙️ [**Setup Guide**](./SETUP_AUTHENTICATION.md) - Step-by-step provider configuration
+3. 🚀 [**Quick Start**](./AUTHENTICATION_QUICKSTART.md) - 5-minute setup guide
+4. 🔑 [**Environment Reference**](./ENV_REFERENCE.md) - All environment variables
+
 ### Core Features
-1. [Device Management](./DEVICE_MANAGEMENT_API_DOCUMENTATION.md) - Quản lý thiết bị và session
-2. [Product Reviews](./PRODUCT_REVIEWS_API_DOCUMENTATION.md) - Đánh giá sản phẩm
-3. [Perfect Fit AI](./PERFECT_FIT_AI_API_DOCUMENTATION.md) - Gợi ý size bằng AI
-4. [Order Returns](./ORDER_RETURNS_API_DOCUMENTATION.md) - Trả hàng/Hoàn tiền
-5. [Payment Accounts](./PAYMENT_ACCOUNTS_API_DOCUMENTATION.md) - Quản lý tài khoản thanh toán
-6. [Social Auth & OTP](./SOCIAL_AUTH_OTP_API_DOCUMENTATION.md) - Đăng nhập xã hội và OTP
+5. [Device Management](./DEVICE_MANAGEMENT_API_DOCUMENTATION.md) - Quản lý thiết bị và session
+6. [Product Reviews](./PRODUCT_REVIEWS_API_DOCUMENTATION.md) - Đánh giá sản phẩm
+7. [Perfect Fit AI](./PERFECT_FIT_AI_API_DOCUMENTATION.md) - Gợi ý size bằng AI
+8. [Order Returns](./ORDER_RETURNS_API_DOCUMENTATION.md) - Trả hàng/Hoàn tiền
+9. [Payment Accounts](./PAYMENT_ACCOUNTS_API_DOCUMENTATION.md) - Quản lý tài khoản thanh toán
+10. [Social Auth & OTP](./SOCIAL_AUTH_OTP_API_DOCUMENTATION.md) - API reference (deprecated, see authentication.md)
 
 ### E-Commerce Features
-7. [Products](./PRODUCT_API_DOCUMENTATION.md) - Quản lý sản phẩm
-8. [Brands](./BRAND_API_DOCUMENTATION.md) - Quản lý thương hiệu
-9. [Cart](./CART_API_DOCUMENTATION.md) - Giỏ hàng
-10. [Wishlist](./WISHLIST_API_DOCUMENTATION.md) - Danh sách yêu thích
-11. [Orders](./ORDER_API_DOCUMENTATION.md) - Quản lý đơn hàng
-12. [Payment](./PAYMENT_API_DOCUMENTATION.md) - Thanh toán
+11. [Products](./PRODUCT_API_DOCUMENTATION.md) - Quản lý sản phẩm
+12. [Brands](./BRAND_API_DOCUMENTATION.md) - Quản lý thương hiệu
+13. [Cart](./CART_API_DOCUMENTATION.md) - Giỏ hàng
+14. [Wishlist](./WISHLIST_API_DOCUMENTATION.md) - Danh sách yêu thích
+15. [Orders](./ORDER_API_DOCUMENTATION.md) - Quản lý đơn hàng
+16. [Payment](./PAYMENT_API_DOCUMENTATION.md) - Thanh toán
 
 ### Admin Features
-13. [Dashboard](./DASHBOARD_API_DOCUMENTATION.md) - Thống kê và báo cáo
-14. [Shipping Settings](./SHIPPING_SETTINGS_API_DOCUMENTATION.md) - Cài đặt vận chuyển
-15. [Shipping Carriers](./SHIPPING_CARRIERS_API_DOCUMENTATION.md) - Đơn vị vận chuyển
+17. [Dashboard](./DASHBOARD_API_DOCUMENTATION.md) - Thống kê và báo cáo
+18. [Shipping Settings](./SHIPPING_SETTINGS_API_DOCUMENTATION.md) - Cài đặt vận chuyển
+19. [Shipping Carriers](./SHIPPING_CARRIERS_API_DOCUMENTATION.md) - Đơn vị vận chuyển
 
-### Summary
-16. [API Complete Summary](./API_COMPLETE_SUMMARY.md) - Tổng hợp 143 endpoints
+### Summary & Implementation
+20. [API Complete Summary](./API_COMPLETE_SUMMARY.md) - Tổng hợp 143 endpoints
+21. [Authentication Summary](../AUTHENTICATION_SUMMARY.md) - Implementation summary
 
 ---
 
@@ -50,7 +60,9 @@ Authorization: Bearer your_access_token_here
 
 ### 3. Get Access Token
 
-**Option 1: Email/Password**
+Perfect Fit supports **3 authentication methods**:
+
+**Option 1: Email/Password** (with custom email verification)
 ```bash
 POST /api/auth/login
 {
@@ -59,11 +71,42 @@ POST /api/auth/login
 }
 ```
 
-**Option 2: Google OAuth**
+**Option 2: Social Login** (Google/Facebook/TikTok)
 ```bash
+# Google OAuth
 POST /api/auth/social/google
 {
   "token": "google_id_token"
+}
+
+# Facebook OAuth
+POST /api/auth/social/facebook
+{
+  "token": "facebook_access_token"
+}
+
+# TikTok OAuth
+POST /api/auth/social/tiktok
+{
+  "token": "tiktok_access_token"
+}
+```
+
+**Option 3: Phone OTP** (SMS verification)
+```bash
+# Send OTP
+POST /api/auth/phone/send-otp
+{
+  "phone": "0987654321",
+  "purpose": "login"
+}
+
+# Verify OTP
+POST /api/auth/phone/verify-otp
+{
+  "phone": "0987654321",
+  "otp_code": "123456",
+  "purpose": "login"
 }
 ```
 

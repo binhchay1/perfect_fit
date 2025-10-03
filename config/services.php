@@ -45,9 +45,30 @@ return [
     ],
 
     'sms' => [
+        'provider' => env('SMS_PROVIDER', 'log'), // Options: log, twilio, firebase, esms, speedsms
         'url' => env('SMS_API_URL', 'https://sms-api.com'),
         'key' => env('SMS_API_KEY', ''),
         'sender' => env('SMS_SENDER', 'PerfectFit'),
+    ],
+
+    // Twilio SMS Service (International - Free trial with credits)
+    'twilio' => [
+        'sid' => env('TWILIO_SID', ''),
+        'token' => env('TWILIO_TOKEN', ''),
+        'from' => env('TWILIO_FROM', ''), // Your Twilio phone number
+    ],
+
+    // eSMS Vietnam Service
+    'esms' => [
+        'api_key' => env('ESMS_API_KEY', ''),
+        'secret_key' => env('ESMS_SECRET_KEY', ''),
+        'brandname' => env('ESMS_BRANDNAME', 'PerfectFit'),
+    ],
+
+    // SpeedSMS Vietnam Service
+    'speedsms' => [
+        'access_token' => env('SPEEDSMS_ACCESS_TOKEN', ''),
+        'sender' => env('SPEEDSMS_SENDER', 'PerfectFit'),
     ],
 
     'postmark' => [

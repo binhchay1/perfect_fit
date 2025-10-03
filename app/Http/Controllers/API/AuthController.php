@@ -22,7 +22,7 @@ use Illuminate\Support\Str;
  * @OA\Info(
  *     title="Perfect Fit API",
  *     version="1.0.0",
- *     description="API documentation for Perfect Fit application"
+ *     description="API documentation for Perfect Fit e-commerce application with multiple authentication methods: Email/Password, Social Login (Google/Facebook/TikTok), Phone OTP (5 SMS providers). Complete e-commerce features with AI size recommendation."
  * )
  *
  * @OA\Server(

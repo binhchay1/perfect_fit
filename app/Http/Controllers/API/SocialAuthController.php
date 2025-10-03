@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Validator;
 /**
  * @OA\Tag(
  *     name="Social Authentication",
- *     description="Social login operations (Google, Facebook, Tiktok)"
+ *     description="OAuth 2.0 social login with Google, Facebook, and TikTok. Auto account creation, email linking, and profile sync. Configure client credentials in .env (GOOGLE_CLIENT_ID, FACEBOOK_CLIENT_ID, TIKTOK_CLIENT_KEY)"
  * )
  */
 final class SocialAuthController extends Controller

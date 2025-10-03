@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Perfect Fit API",
-        "description": "API documentation for Perfect Fit application",
+        "description": "API documentation for Perfect Fit e-commerce application with multiple authentication methods: Email/Password, Social Login (Google/Facebook/TikTok), Phone OTP (5 SMS providers). Complete e-commerce features with AI size recommendation.",
         "version": "1.0.0"
     },
     "servers": [
@@ -6081,7 +6081,7 @@
                     "OTP Authentication"
                 ],
                 "summary": "Send OTP to phone",
-                "description": "Send OTP code to phone number for verification",
+                "description": "Send OTP code to phone number for verification. SMS Providers: Twilio (International, free $15 trial), Firebase (Free unlimited), eSMS Vietnam (Paid ~600-800 VNĐ/SMS), SpeedSMS Vietnam (Paid ~300-500 VNĐ/SMS), Log mode (Development). Configure via SMS_PROVIDER in .env",
                 "operationId": "85401f113128d24625887483644bd5bd",
                 "requestBody": {
                     "required": true,
@@ -9328,7 +9328,7 @@
         },
         {
             "name": "OTP Authentication",
-            "description": "Phone OTP verification and authentication"
+            "description": "Phone OTP verification and authentication. Supports multiple SMS providers: Twilio (free trial), Firebase (free), eSMS Vietnam, SpeedSMS Vietnam, and Log mode (development)."
         },
         {
             "name": "Payments",
@@ -9344,7 +9344,7 @@
         },
         {
             "name": "Social Authentication",
-            "description": "Social login operations (Google, Facebook, Tiktok)"
+            "description": "OAuth 2.0 social login with Google, Facebook, and TikTok. Auto account creation, email linking, and profile sync. Configure client credentials in .env (GOOGLE_CLIENT_ID, FACEBOOK_CLIENT_ID, TIKTOK_CLIENT_KEY)"
         },
         {
             "name": "User",

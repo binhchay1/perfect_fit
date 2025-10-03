@@ -17,7 +17,7 @@ use App\Models\User;
 /**
  * @OA\Tag(
  *     name="OTP Authentication",
- *     description="Phone OTP verification and authentication"
+ *     description="Phone OTP verification and authentication. Supports multiple SMS providers: Twilio (free trial), Firebase (free), eSMS Vietnam, SpeedSMS Vietnam, and Log mode (development)."
  * )
  */
 final class OtpController extends Controller
@@ -33,7 +33,7 @@ final class OtpController extends Controller
      * @OA\Post(
      *     path="/auth/phone/send-otp",
      *     summary="Send OTP to phone",
-     *     description="Send OTP code to phone number for verification",
+     *     description="Send OTP code to phone number for verification. SMS Providers: Twilio (International, free $15 trial), Firebase (Free unlimited), eSMS Vietnam (Paid ~600-800 VNĐ/SMS), SpeedSMS Vietnam (Paid ~300-500 VNĐ/SMS), Log mode (Development). Configure via SMS_PROVIDER in .env",
      *     tags={"OTP Authentication"},
      *     @OA\RequestBody(
      *         required=true,

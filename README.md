@@ -135,11 +135,11 @@ The Swagger UI provides:
 The application includes comprehensive API modules:
 
 #### **Core APIs**
-- ✅ **Authentication** - Login, Register, Email Verification, Password Reset
-- ✅ **Social Auth** - Google, Facebook, Tiktok OAuth
-- ✅ **OTP** - Phone number verification and login
-- ✅ **User Management** - Profile, Change Password
-- ✅ **Device Management** - Multi-device session tracking
+- ✅ **Authentication** - Login, Register, Email Verification (Custom Template)
+- ✅ **Social Auth** - Google, Facebook, TikTok OAuth integration
+- ✅ **Phone OTP** - SMS verification (Twilio, Firebase, eSMS, SpeedSMS)
+- ✅ **User Management** - Profile, Change Password, Account Settings
+- ✅ **Device Management** - Multi-device session tracking & revocation
 
 #### **E-Commerce APIs**
 - ✅ **Products** - CRUD, Search, Filters, by Brand/Gender
@@ -169,6 +169,14 @@ The application includes comprehensive API modules:
 ### Documentation Files
 
 Detailed documentation for each module is available in the `docs/` folder:
+
+**Authentication & Security:**
+- 📖 [`authentication.md`](docs/authentication.md) - Complete authentication guide
+- ⚙️ [`SETUP_AUTHENTICATION.md`](docs/SETUP_AUTHENTICATION.md) - Setup instructions
+- 🚀 [`AUTHENTICATION_QUICKSTART.md`](docs/AUTHENTICATION_QUICKSTART.md) - 5-min setup
+- 🔑 [`ENV_REFERENCE.md`](docs/ENV_REFERENCE.md) - Environment variables
+
+**Feature Modules:**
 - `DEVICE_MANAGEMENT_API_DOCUMENTATION.md`
 - `PRODUCT_REVIEWS_API_DOCUMENTATION.md`
 - `PERFECT_FIT_AI_API_DOCUMENTATION.md`
@@ -179,23 +187,79 @@ Detailed documentation for each module is available in the `docs/` folder:
 
 ## 🔐 Authentication
 
-This API uses **Laravel Passport** for authentication:
+Perfect Fit supports **multiple authentication methods** using Laravel Passport:
 
-1. **Register** a new account via `/api/auth/register`
-2. **Verify** your email using the verification link
-3. **Login** via `/api/auth/login` to get your access token
-4. **Include the token** in subsequent requests:
-   ```
-   Authorization: Bearer your_access_token_here
-   ```
+### Authentication Methods
+
+#### 1. 📧 Email & Password
+Traditional registration with email verification:
+1. **Register:** `POST /api/auth/register` (with beautiful custom email template)
+2. **Verify Email:** Click link in email or `GET /api/auth/verify/{token}`
+3. **Login:** `POST /api/auth/login` to get access token
+
+#### 2. 🔐 Social Login (OAuth 2.0)
+Login with social accounts:
+- **Google:** `POST /api/auth/social/google` - Google ID token authentication
+- **Facebook:** `POST /api/auth/social/facebook` - Facebook access token
+- **TikTok:** `POST /api/auth/social/tiktok` - TikTok Login Kit integration
+
+Features: Auto account creation, email linking, profile sync
+
+#### 3. 📱 Phone OTP
+Login with phone number via SMS OTP:
+- **Send OTP:** `POST /api/auth/phone/send-otp`
+- **Verify OTP:** `POST /api/auth/phone/verify-otp`
+- **Resend OTP:** `POST /api/auth/phone/resend-otp`
+
+**SMS Providers Supported:**
+- 🌍 **Twilio** (International, Free $15 trial)
+- 🔥 **Firebase Phone Auth** (Free unlimited)
+- 🇻🇳 **eSMS Vietnam** (Paid, Brandname SMS)
+- 🇻🇳 **SpeedSMS Vietnam** (Paid, ~300-500 VNĐ/SMS)
+- 📝 **Log Mode** (Development, logs to console)
+
+### Using Access Token
+
+Include the token in subsequent requests:
+```
+Authorization: Bearer your_access_token_here
+```
 
 ### Testing Authentication in Swagger
 
-1. Go to `/docs`
+1. Go to **`/docs`**
 2. Click the **Authorize** button (🔒)
 3. Enter: `Bearer your_access_token_here`
 4. Click **Authorize**
-5. Now you can test protected endpoints
+5. Now you can test all protected endpoints
+
+### Quick Setup Guide
+
+**Development (No external services):**
+```env
+SMS_PROVIDER=log
+MAIL_MAILER=smtp
+```
+
+**Production with Twilio (Free trial):**
+```env
+SMS_PROVIDER=twilio
+TWILIO_SID=your_account_sid
+TWILIO_TOKEN=your_auth_token
+TWILIO_FROM=+1234567890
+```
+
+**Social Login (Optional):**
+```env
+GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=xxx
+FACEBOOK_CLIENT_ID=xxx
+FACEBOOK_CLIENT_SECRET=xxx
+TIKTOK_CLIENT_KEY=xxx
+TIKTOK_CLIENT_SECRET=xxx
+```
+
+📚 **Detailed Documentation:** See [`docs/authentication.md`](docs/authentication.md) for complete setup guide
 
 ## 🛠 Development Commands
 
@@ -238,10 +302,18 @@ php artisan route:list
 | `DB_*` | Database connection settings | - |
 | `MAIL_*` | Email service configuration | - |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID | - |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | - |
 | `FACEBOOK_CLIENT_ID` | Facebook OAuth app ID | - |
-| `TIKTOK_CLIENT_KEY` | Tiktok OAuth client key | - |
-| `SMS_API_URL` | SMS service API URL | - |
-| `SMS_API_KEY` | SMS service API key | - |
+| `FACEBOOK_CLIENT_SECRET` | Facebook OAuth app secret | - |
+| `TIKTOK_CLIENT_KEY` | TikTok OAuth client key | - |
+| `TIKTOK_CLIENT_SECRET` | TikTok OAuth client secret | - |
+| `SMS_PROVIDER` | SMS provider (log/twilio/firebase/esms/speedsms) | `log` |
+| `TWILIO_SID` | Twilio Account SID | - |
+| `TWILIO_TOKEN` | Twilio Auth Token | - |
+| `TWILIO_FROM` | Twilio phone number | - |
+| `ESMS_API_KEY` | eSMS Vietnam API key | - |
+| `ESMS_SECRET_KEY` | eSMS Vietnam secret key | - |
+| `SPEEDSMS_ACCESS_TOKEN` | SpeedSMS Vietnam access token | - |
 | `PERFECT_FIT_AI_URL` | AI service URL for size recommendation | - |
 | `PERFECT_FIT_AI_KEY` | AI service API key | - |
 
