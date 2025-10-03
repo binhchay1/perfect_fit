@@ -22,11 +22,6 @@ MAIL_FROM_NAME="${APP_NAME}"
 ```env
 # Gmail OAuth2 Configuration
 MAIL_MAILER=gmail
-GOOGLE_MAIL_CLIENT_ID=1081487120116-lh5ddb8nh536268pdcs7tpjvoadcdfju.apps.googleusercontent.com
-GOOGLE_MAIL_CLIENT_SECRET=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
-GOOGLE_MAIL_REFRESH_TOKEN=1//0eqq_14_A5kP8CgYIARAAGA4SNwF-L9Ir5PHz0gBKRsWoHuifeORFcDA8CkDOyS2NaFoJ6RxFrM-7TOO9-NPGNr6DL31S_lyEbXc
-GOOGLE_MAIL_FROM=binhchay1@gmail.com
-GOOGLE_MAIL_FROM_NAME="Perfect Fit"
 
 # Common settings (keep)
 MAIL_FROM_ADDRESS="perfect_fit@example.com"
@@ -45,9 +40,9 @@ FRONTEND_URL=http://localhost:3000
 MAIL_MAILER=gmail  # ← Change to 'smtp' if OAuth2 fails
 
 # ================== GMAIL OAUTH2 (PRIMARY) ==================
-GOOGLE_MAIL_CLIENT_ID=1081487120116-lh5ddb8nh536268pdcs7tpjvoadcdfju.apps.googleusercontent.com
-GOOGLE_MAIL_CLIENT_SECRET=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
-GOOGLE_MAIL_REFRESH_TOKEN=1//0eqq_14_A5kP8CgYIARAAGA4SNwF-L9Ir5PHz0gBKRsWoHuifeORFcDA8CkDOyS2NaFoJ6RxFrM-7TOO9-NPGNr6DL31S_lyEbXc
+GOOGLE_MAIL_CLIENT_ID=
+GOOGLE_MAIL_CLIENT_SECRET=
+GOOGLE_MAIL_REFRESH_TOKEN=
 GOOGLE_MAIL_FROM=binhchay1@gmail.com
 GOOGLE_MAIL_FROM_NAME="Perfect Fit"
 
@@ -140,12 +135,6 @@ APP_ENV=local
 # ================== MAIL MAILER ==================
 MAIL_MAILER=gmail  # Options: gmail, smtp
 
-# ================== GMAIL OAUTH2 ==================
-GOOGLE_MAIL_CLIENT_ID=1081487120116-lh5ddb8nh536268pdcs7tpjvoadcdfju.apps.googleusercontent.com
-GOOGLE_MAIL_CLIENT_SECRET=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
-GOOGLE_MAIL_REFRESH_TOKEN=1//0eqq_14_A5kP8CgYIARAAGA4SNwF-L9Ir5PHz0gBKRsWoHuifeORFcDA8CkDOyS2NaFoJ6RxFrM-7TOO9-NPGNr6DL31S_lyEbXc
-GOOGLE_MAIL_FROM=binhchay1@gmail.com
-GOOGLE_MAIL_FROM_NAME="Perfect Fit"
 
 # ================== SMTP BACKUP ==================
 MAIL_HOST=smtp.gmail.com
