@@ -6,7 +6,6 @@
     "license": "MIT",
     "require": {
         "php": "^8.1",
-        "dacastro4/laravel-gmail": "^7.0",
         "darkaonline/l5-swagger": "^8.6",
         "google/apiclient": "^2.18",
         "guzzlehttp/guzzle": "^7.2",

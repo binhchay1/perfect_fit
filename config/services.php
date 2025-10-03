@@ -33,7 +33,7 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URL'),
     ],
 
-    // Gmail OAuth2 (for Email Sending)
+    // Gmail API (for Email Sending via API - SMTP ports blocked)
     'gmail' => [
         'client_id' => env('GOOGLE_MAIL_CLIENT_ID'),
         'client_secret' => env('GOOGLE_MAIL_CLIENT_SECRET'),
@@ -41,6 +41,9 @@ return [
         'from' => [
             'address' => env('GOOGLE_MAIL_FROM', env('MAIL_FROM_ADDRESS')),
             'name' => env('GOOGLE_MAIL_FROM_NAME', env('MAIL_FROM_NAME', 'Perfect Fit')),
+        ],
+        'scopes' => [
+            'https://www.googleapis.com/auth/gmail.send',
         ],
     ],
 

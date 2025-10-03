@@ -56,7 +56,7 @@ class SendEmail implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle()
+    public function handle(\App\Services\GmailApiService $gmailService)
     {
         \Log::channel('email_debug')->info('=== SendEmail Job Started ===', [
             'job_id' => $this->job->getJobId(),
@@ -67,17 +67,41 @@ class SendEmail implements ShouldQueue
         ]);
 
         try {
+            $mailer = config('mail.default');
+            
             \Log::channel('email_debug')->info('Preparing to send email', [
                 'email' => $this->userMail,
                 'data' => $this->dataMail,
-                'mailer' => config('mail.default'),
+                'mailer' => $mailer,
             ]);
 
-            // Send email
-            Mail::to($this->userMail)->send(new SendUserEmail($this->dataMail));
+            if ($mailer === 'gmail') {
+                // Use Gmail API (SMTP ports blocked)
+                \Log::channel('email_debug')->info('Using Gmail API (SMTP blocked)', [
+                    'email' => $this->userMail,
+                ]);
+
+                $mailable = new SendUserEmail($this->dataMail);
+                $rendered = $mailable->render();
+                
+                $sent = $gmailService->sendEmail(
+                    $this->userMail,
+                    'Verify Your Account - Perfect Fit',
+                    $rendered
+                );
+
+                if (!$sent) {
+                    throw new \Exception('Gmail API failed to send email');
+                }
+
+            } else {
+                // Use standard mailer (SMTP, etc)
+                Mail::to($this->userMail)->send(new SendUserEmail($this->dataMail));
+            }
             
             \Log::channel('email_debug')->info('✅ Email sent successfully!', [
                 'email' => $this->userMail,
+                'method' => $mailer === 'gmail' ? 'Gmail API' : 'Laravel Mailer',
                 'timestamp' => now()->toDateTimeString(),
             ]);
 
