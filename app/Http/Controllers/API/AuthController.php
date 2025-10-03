@@ -266,8 +266,18 @@ final class AuthController extends Controller
                 'expires_at' => Carbon::now('Asia/Ho_Chi_Minh')->addHours(24), // Token expires in 24 hours
             ]);
 
-            //dùng job để xử lý mail
-            SendEmail::dispatch($userMail, $dataMail);
+            // Queue email job - trả về response ngay, email gửi background
+            try {
+                SendEmail::dispatch($userMail, $dataMail);
+                Log::info('Email verification job queued', ['email' => $userMail]);
+            } catch (\Exception $emailException) {
+                // Log error nhưng vẫn trả về success vì user đã được tạo
+                Log::error('Failed to queue verification email', [
+                    'email' => $userMail,
+                    'error' => $emailException->getMessage()
+                ]);
+            }
+
             return $this->successResponse([
                 'user' => [
                     'id' => $user->id,
@@ -279,7 +289,15 @@ final class AuthController extends Controller
                 'message' => 'Please check your email to verify your account'
             ], 'User created successfully. Verification email sent.', 201);
         } catch (\Exception $e) {
-            return $this->serverErrorResponse('Registration failed', $e->getMessage());
+            Log::error('Registration failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return $this->serverErrorResponse(
+                'Registration failed',
+                config('app.debug') ? $e->getMessage() : 'An error occurred during registration'
+            );
         }
     }
 
@@ -598,8 +616,16 @@ final class AuthController extends Controller
                 'expires_at' => Carbon::now('Asia/Ho_Chi_Minh')->addHours(6), // 6 hours expiration
             ]);
 
-            // Send email
-            SendEmail::dispatch($user->email, $dataMail);
+            // Queue email job - background processing
+            try {
+                SendEmail::dispatch($user->email, $dataMail);
+                Log::info('Resend verification email queued', ['email' => $user->email]);
+            } catch (\Exception $emailException) {
+                Log::error('Failed to queue resend verification email', [
+                    'email' => $user->email,
+                    'error' => $emailException->getMessage()
+                ]);
+            }
 
             // Set rate limiting cache
             Cache::put($cacheKey, true, now()->addMinute());
