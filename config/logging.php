@@ -126,6 +126,21 @@ return [
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
+
+        'email_debug' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/email-debug.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+
+        'horizon_debug' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/horizon-debug.log'),
+            'level' => 'debug',
+            'days' => 7,
+            'replace_placeholders' => true,
+        ],
     ],
 
 ];

@@ -58,19 +58,58 @@ class SendEmail implements ShouldQueue
      */
     public function handle()
     {
+        \Log::channel('email_debug')->info('=== SendEmail Job Started ===', [
+            'job_id' => $this->job->getJobId(),
+            'queue' => $this->job->getQueue(),
+            'email' => $this->userMail,
+            'attempts' => $this->attempts(),
+            'timestamp' => now()->toDateTimeString(),
+        ]);
+
         try {
+            \Log::channel('email_debug')->info('Preparing to send email', [
+                'email' => $this->userMail,
+                'data' => $this->dataMail,
+                'mailer' => config('mail.default'),
+            ]);
+
+            // Send email
             Mail::to($this->userMail)->send(new SendUserEmail($this->dataMail));
+            
+            \Log::channel('email_debug')->info('✅ Email sent successfully!', [
+                'email' => $this->userMail,
+                'timestamp' => now()->toDateTimeString(),
+            ]);
+
             \Log::info('Verification email sent successfully', [
                 'email' => $this->userMail,
                 'user_data' => $this->dataMail
             ]);
+
         } catch (\Exception $ex) {
+            \Log::channel('email_debug')->error('❌ Email sending FAILED', [
+                'email' => $this->userMail,
+                'error' => $ex->getMessage(),
+                'file' => $ex->getFile(),
+                'line' => $ex->getLine(),
+                'trace' => $ex->getTraceAsString(),
+                'attempt' => $this->attempts(),
+                'max_tries' => $this->tries,
+            ]);
+
             \Log::error('Failed to send verification email', [
                 'email' => $this->userMail,
                 'error' => $ex->getMessage(),
                 'trace' => $ex->getTraceAsString()
             ]);
-            throw $ex; // Re-throw so the job fails properly
+
+            // Re-throw to trigger retry
+            throw $ex;
+        } finally {
+            \Log::channel('email_debug')->info('=== SendEmail Job Ended ===', [
+                'email' => $this->userMail,
+                'timestamp' => now()->toDateTimeString(),
+            ]);
         }
     }
 }
