@@ -22,3 +22,5 @@ yarn-error.log
 # Gmail OAuth temp files
 /get-gmail-token.php
 /gmail-env.txt
+/get-gmail-token-interactive.php
+/gmail-oauth-config.txt
