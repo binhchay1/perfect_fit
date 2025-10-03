@@ -18,13 +18,6 @@ class SendEmail implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
-     * The name of the queue the job should be sent to.
-     *
-     * @var string
-     */
-    public $queue = 'emails';
-
-    /**
      * The number of times the job may be attempted.
      *
      * @var int
@@ -55,6 +48,9 @@ class SendEmail implements ShouldQueue
     {
         $this->userMail = $userMail;
         $this->dataMail = $dataMail;
+        
+        // Set queue using Queueable trait method
+        $this->onQueue('emails');
     }
 
     /**
