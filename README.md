@@ -1,564 +1,233 @@
-# Perfect Fit API
-
-Laravel-based API application with JWT authentication, Swagger documentation, and comprehensive user management.
-
-## 🚀 Quick Setup
-
-### Prerequisites
-- PHP 8.2+
-- Composer
-- MySQL/PostgreSQL
-- Redis (for queue handling and email processing)
-- Node.js & NPM (optional, for frontend assets)
-
-### 1. Installation
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd perfect_fit
-
-# Install PHP dependencies
-composer install
-
-# Install NPM dependencies (if needed)
-npm install
-
-# Copy environment file
-cp .env.example .env
-```
-
-### 2. Environment Configuration
-
-Edit `.env` file with your database and application settings:
-
-```env
-APP_NAME="Perfect Fit"
-APP_ENV=local
-APP_KEY=
-APP_DEBUG=true
-APP_URL=http://localhost:8000
-
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=perfect_fit
-DB_USERNAME=your_username
-DB_PASSWORD=your_password
-
-# Redis Configuration (for queues and caching)
-REDIS_HOST=127.0.0.1
-REDIS_PASSWORD=null
-REDIS_PORT=6379
-REDIS_DB=0
-
-# Queue Configuration (Redis-based)
-QUEUE_CONNECTION=redis
-CACHE_DRIVER=redis
-SESSION_DRIVER=redis
-
-# Mail Configuration (for email verification)
-MAIL_MAILER=smtp
-MAIL_HOST=your_smtp_host
-MAIL_PORT=587
-MAIL_USERNAME=your_email
-MAIL_PASSWORD=your_password
-MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS=noreply@perfectfit.com
-MAIL_FROM_NAME="${APP_NAME}"
-
-# Swagger Configuration
-L5_SWAGGER_GENERATE_ALWAYS=true
-L5_SWAGGER_UI_DOC_EXPANSION=none
-```
-
-### 3. Application Setup
-
-```bash
-# Generate application key
-php artisan key:generate
-
-# Create database (make sure your DB server is running)
-# Then run migrations
-php artisan migrate
-
-# Setup Laravel Passport for API authentication
-php artisan passport:keys --force
-php artisan passport:client --personal
-
-# Generate Swagger documentation
-php artisan l5-swagger:generate
-
-# Clear and cache config (optional, for production)
-php artisan config:cache
-php artisan route:cache
-```
-
-### 4. Database Seeding (Optional)
-
-```bash
-# Run seeders if available
-php artisan db:seed
-```
-
-### 5. Start Development Server
-
-```bash
-# Start Redis server (if not running as service)
-redis-server
-
-# Start Laravel queue worker (in separate terminal)
-php artisan queue:work
-
-# Start Laravel development server
-php artisan serve
-
-# Your application will be available at: http://localhost:8000
-```
-
-## 📚 API Documentation
-
-### Access Swagger Documentation
-
-Once your application is running, you can access the interactive API documentation at:
-
-**🔗 http://localhost:8000/docs**
-
-The Swagger UI provides:
-- Interactive API testing
-- Complete endpoint documentation
-- Request/response examples
-- Authentication testing
-
-### Available API Modules
-
-The application includes comprehensive API modules:
-
-#### **Core APIs**
-- ✅ **Authentication** - Login, Register, Email Verification (Custom Template)
-- ✅ **Social Auth** - Google, Facebook, TikTok OAuth integration
-- ✅ **Phone OTP** - SMS verification (Twilio, Firebase, eSMS, SpeedSMS)
-- ✅ **User Management** - Profile, Change Password, Account Settings
-- ✅ **Device Management** - Multi-device session tracking & revocation
-
-#### **E-Commerce APIs**
-- ✅ **Products** - CRUD, Search, Filters, by Brand/Gender
-- ✅ **Brands** - Listing, Search, with Products
-- ✅ **Cart** - Add, Update, Remove, Summary
-- ✅ **Wishlist** - Add, Remove, Check, Count
-- ✅ **Orders** - Create, List, Detail, Cancel, Tracking
-- ✅ **Payment** - VNPay, COD, Payment Links
-- ✅ **Shipping** - Carriers, Settings, Calculation
-
-#### **Advanced Features**
-- ✅ **Product Reviews** - Rating, Comments, Like/Dislike
-- ✅ **Perfect Fit AI** - AI-powered size recommendation
-- ✅ **Order Returns** - Return/Refund requests
-- ✅ **Payment Accounts** - Bank account management (Admin)
-
-#### **Admin Panel APIs**
-- ✅ **Dashboard** - Analytics, Statistics, Reports
-- ✅ **User Management** - CRUD, Status, Statistics
-- ✅ **Order Management** - Status, Tracking, Refunds
-- ✅ **Product Management** - CRUD, Bulk operations
-- ✅ **Brand Management** - CRUD, Status
-- ✅ **Shipping Management** - Carriers, Settings
-- ✅ **Payment Accounts** - Bank accounts setup
-- ✅ **Return Management** - Approve/Reject returns
-
-### Documentation Files
-
-Detailed documentation for each module is available in the `docs/` folder:
-
-**Authentication & Security:**
-- 📖 [`authentication.md`](docs/authentication.md) - Complete authentication guide
-- ⚙️ [`SETUP_AUTHENTICATION.md`](docs/SETUP_AUTHENTICATION.md) - Setup instructions
-- 🚀 [`AUTHENTICATION_QUICKSTART.md`](docs/AUTHENTICATION_QUICKSTART.md) - 5-min setup
-- 🔑 [`ENV_REFERENCE.md`](docs/ENV_REFERENCE.md) - Environment variables
-
-**Feature Modules:**
-- `DEVICE_MANAGEMENT_API_DOCUMENTATION.md`
-- `PRODUCT_REVIEWS_API_DOCUMENTATION.md`
-- `PERFECT_FIT_AI_API_DOCUMENTATION.md`
-- `ORDER_RETURNS_API_DOCUMENTATION.md`
-- `PAYMENT_ACCOUNTS_API_DOCUMENTATION.md`
-- `SOCIAL_AUTH_OTP_API_DOCUMENTATION.md`
-- And more...
-
-## 🔐 Authentication
-
-Perfect Fit supports **multiple authentication methods** using Laravel Passport:
-
-### Authentication Methods
-
-#### 1. 📧 Email & Password
-Traditional registration with email verification:
-1. **Register:** `POST /api/auth/register` (with beautiful custom email template)
-2. **Verify Email:** Click link in email or `GET /api/auth/verify/{token}`
-3. **Login:** `POST /api/auth/login` to get access token
-
-#### 2. 🔐 Social Login (OAuth 2.0)
-Login with social accounts:
-- **Google:** `POST /api/auth/social/google` - Google ID token authentication
-- **Facebook:** `POST /api/auth/social/facebook` - Facebook access token
-- **TikTok:** `POST /api/auth/social/tiktok` - TikTok Login Kit integration
-
-Features: Auto account creation, email linking, profile sync
-
-#### 3. 📱 Phone OTP
-Login with phone number via SMS OTP:
-- **Send OTP:** `POST /api/auth/phone/send-otp`
-- **Verify OTP:** `POST /api/auth/phone/verify-otp`
-- **Resend OTP:** `POST /api/auth/phone/resend-otp`
-
-**SMS Providers Supported:**
-- 🌍 **Twilio** (International, Free $15 trial)
-- 🔥 **Firebase Phone Auth** (Free unlimited)
-- 🇻🇳 **eSMS Vietnam** (Paid, Brandname SMS)
-- 🇻🇳 **SpeedSMS Vietnam** (Paid, ~300-500 VNĐ/SMS)
-- 📝 **Log Mode** (Development, logs to console)
-
-### Using Access Token
-
-Include the token in subsequent requests:
-```
-Authorization: Bearer your_access_token_here
-```
-
-### Testing Authentication in Swagger
-
-1. Go to **`/docs`**
-2. Click the **Authorize** button (🔒)
-3. Enter: `Bearer your_access_token_here`
-4. Click **Authorize**
-5. Now you can test all protected endpoints
-
-### Quick Setup Guide
-
-**Development (No external services):**
-```env
-SMS_PROVIDER=log
-MAIL_MAILER=smtp
-```
-
-**Production with Twilio (Free trial):**
-```env
-SMS_PROVIDER=twilio
-TWILIO_SID=your_account_sid
-TWILIO_TOKEN=your_auth_token
-TWILIO_FROM=+1234567890
-```
-
-**Social Login (Optional):**
-```env
-GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=xxx
-FACEBOOK_CLIENT_ID=xxx
-FACEBOOK_CLIENT_SECRET=xxx
-TIKTOK_CLIENT_KEY=xxx
-TIKTOK_CLIENT_SECRET=xxx
-```
-
-📚 **Detailed Documentation:** See [`docs/authentication.md`](docs/authentication.md) for complete setup guide
-
-## 🛠 Development Commands
-
-```bash
-# Clear application cache
-php artisan cache:clear
-
-# Clear config cache
-php artisan config:clear
-
-# Clear route cache
-php artisan route:clear
-
-# Regenerate Swagger docs
-php artisan l5-swagger:generate
-
-# Run migrations with fresh start
-php artisan migrate:fresh
-
-# Run specific migration
-php artisan migrate --path=/database/migrations/specific_migration.php
-
-# Rollback migrations
-php artisan migrate:rollback
-
-# Check routes
-php artisan route:list
-```
-
-## 📝 Environment Variables Reference
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `REDIS_HOST` | Redis server host | `127.0.0.1` |
-| `REDIS_PORT` | Redis server port | `6379` |
-| `QUEUE_CONNECTION` | Queue driver (should be redis) | `sync` |
-| `CACHE_DRIVER` | Cache driver (redis recommended) | `file` |
-| `L5_SWAGGER_GENERATE_ALWAYS` | Auto-regenerate docs on each request | `false` |
-| `L5_SWAGGER_UI_DOC_EXPANSION` | Swagger UI default expansion | `none` |
-| `DB_*` | Database connection settings | - |
-| `MAIL_*` | Email service configuration | - |
-| `GOOGLE_CLIENT_ID` | Google OAuth client ID | - |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | - |
-| `FACEBOOK_CLIENT_ID` | Facebook OAuth app ID | - |
-| `FACEBOOK_CLIENT_SECRET` | Facebook OAuth app secret | - |
-| `TIKTOK_CLIENT_KEY` | TikTok OAuth client key | - |
-| `TIKTOK_CLIENT_SECRET` | TikTok OAuth client secret | - |
-| `SMS_PROVIDER` | SMS provider (log/twilio/firebase/esms/speedsms) | `log` |
-| `TWILIO_SID` | Twilio Account SID | - |
-| `TWILIO_TOKEN` | Twilio Auth Token | - |
-| `TWILIO_FROM` | Twilio phone number | - |
-| `ESMS_API_KEY` | eSMS Vietnam API key | - |
-| `ESMS_SECRET_KEY` | eSMS Vietnam secret key | - |
-| `SPEEDSMS_ACCESS_TOKEN` | SpeedSMS Vietnam access token | - |
-| `PERFECT_FIT_AI_URL` | AI service URL for size recommendation | - |
-| `PERFECT_FIT_AI_KEY` | AI service API key | - |
-
-## 🚨 Troubleshooting
-
-### Common Issues
-
-**Passport Keys Not Generated:**
-```bash
-php artisan passport:keys --force
-php artisan passport:client --personal
-```
-
-
-
-**Database Connection Error:**
-- Check your `.env` database credentials
-- Ensure your database server is running
-- Create the database if it doesn't exist
-
-**Swagger Documentation Not Loading:**
-```bash
-php artisan l5-swagger:generate
-php artisan config:clear
-```
-
-**Redis Connection Error:**
-```bash
-# Check if Redis is running
-redis-cli ping
-
-# Start Redis if not running
-redis-server
-
-# Or install Redis if not installed:
-# Ubuntu/Debian: sudo apt install redis-server
-# macOS: brew install redis
-# Windows: Download from https://redis.io/download
-```
-
-**Queue Jobs Not Processing:**
-```bash
-# Make sure Redis is running
-redis-cli ping
-
-# Start queue worker
-php artisan queue:work
-
-# Clear failed jobs
-php artisan queue:clear
-```
-
-**Permission Errors:**
-```bash
-sudo chown -R $USER:www-data storage
-sudo chown -R $USER:www-data bootstrap/cache
-chmod -R 755 storage
-chmod -R 755 bootstrap/cache
-```
-
-## 🏗 Project Structure
-
+# Perfect Fit API – Laravel JWT API with Swagger & Advanced Auth 🛠️
+
+![PHP](https://img.shields.io/badge/PHP-8.2-blue?logo=php) ![Laravel](https://img.shields.io/badge/Laravel-10.x-red?logo=laravel) ![JWT](https://img.shields.io/badge/JWT-Passport-green?logo=laravel) ![Swagger](https://img.shields.io/badge/Swagger-L5-yellow?logo=swagger) ![MySQL](https://img.shields.io/badge/MySQL-8.x-orange?logo=mysql) ![License](https://img.shields.io/badge/License-MIT-green)
+
+Yo bro, welcome to **Perfect Fit API**! 🚀 This is a beast of a Laravel API built for e-commerce apps that need rock-solid authentication, device tracking, and a full suite of shopping features. Think of it as the backend powerhouse for a Next.js or React Native app – JWT auth via Passport, auto-generated Swagger docs for easy testing, and modules for everything from social logins to AI size recommendations. Whether you're building a mobile app or integrating with a web frontend, this API has you covered with clean, scalable code that follows Laravel best practices.
+
+## 📋 Project Overview
+As a web dev, imagine you're spinning up a backend for an online clothing store where users can login via Google, track their devices, add stuff to cart, and even get AI-powered size suggestions based on measurements. Perfect Fit handles all that, answering questions like:
+- 🔐 How do I secure multi-device logins without session headaches?
+- 📱 Can users switch between phone and web without re-authenticating every time?
+- 🛒 What's the flow for cart, wishlist, orders, and payments in a stateless API?
+- 📚 How do I document and test all these endpoints without writing Postman collections manually?
+
+Powered by **Laravel Passport** for JWT tokens, **L5-Swagger** for interactive docs, and Redis for queues/caching, this API is production-ready out of the box. It's structured with repositories and services for that clean architecture vibe, making it easy to maintain and extend.
+
+## 🗃️ Database
+The system uses **MySQL** (or PostgreSQL) with key tables like:
+- **Users**: Core user data with roles and profiles. Columns: `id`, `name`, `email`, `phone`, `verified_at`, `social_provider`.
+- **UserDevices**: Tracks multi-device sessions. Columns: `id`, `user_id`, `device_id`, `device_type`, `fcm_token`, `trusted_at`, `last_used_at`.
+- **Products**: E-commerce items. Columns: `id`, `name`, `price`, `stock`, `brand_id`, `gender`, `measurements` (JSON for sizes).
+- **Carts**: User shopping carts. Columns: `id`, `user_id`, `product_id`, `quantity`.
+- **Orders**: Purchase records. Columns: `id`, `user_id`, `total`, `status`, `payment_method`, `shipping_address`.
+- **ProductReviews**: User feedback. Columns: `id`, `product_id`, `user_id`, `rating`, `comment`, `likes`.
+
+📂 Migrations are in `database/migrations/`, with Eloquent models in `app/Models/` handling relationships (e.g., users have many devices and orders).
+
+## 🛠️ Environment Requirements
+To run Perfect Fit API, you need:
+- **PHP**: 8.2+ (Laravel 10.x demands it) 🐘
+- **Composer**: For PHP deps 📦
+- **Node.js & NPM**: Optional, for asset compilation 🌐
+- **Database**: MySQL 8.x or PostgreSQL 🗄️
+- **Redis**: For queues, caching, and sessions (must-have for emails) 🚀
+- **System**: Linux/macOS/Windows (WSL is king) 💻
+- **Optional Services**:
+  - **Twilio/Firebase/eSMS/SpeedSMS**: For phone OTP.
+  - **Google/Facebook/TikTok**: For social auth.
+  - **SMTP Server**: For email verification (Gmail works for dev).
+
+Dependencies (in `composer.json`):
+- `laravel/framework`: The backbone.
+- `laravel/passport`: JWT/OAuth magic.
+- `darkaonline/l5-swagger`: Auto-docs like magic.
+- `laravel/socialite`: Social login handlers.
+
+## ⚙️ Setup Instructions
+Follow these steps to fire up the API, like bootstrapping a fresh Laravel project but with extra sauce:
+
+1. **Clone the Repository** 📥:
+   ```bash
+   git clone https://github.com/binhchay1/perfect-fit-api.git
+   cd perfect_fit
+   ```
+
+2. **Install Dependencies** 📦:
+   ```bash
+   composer install
+   npm install  # If you need frontend assets
+   ```
+
+3. **Configure Environment** 🛠️:
+   ```bash
+   cp .env.example .env
+   ```
+   Edit `.env` – here's the must-haves:
+   ```env
+   APP_NAME="Perfect Fit"
+   APP_ENV=local
+   APP_DEBUG=true
+   APP_URL=http://localhost:8000
+
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=perfect_fit
+   DB_USERNAME=your_db_user
+   DB_PASSWORD=your_db_pass
+
+   REDIS_HOST=127.0.0.1
+   REDIS_PASSWORD=null
+   REDIS_PORT=6379
+
+   QUEUE_CONNECTION=redis
+   CACHE_DRIVER=redis
+   SESSION_DRIVER=redis
+
+   MAIL_MAILER=smtp
+   MAIL_HOST=smtp.gmail.com  # Or your SMTP
+   MAIL_PORT=587
+   MAIL_USERNAME=your_email@gmail.com
+   MAIL_PASSWORD=your_app_password
+   MAIL_ENCRYPTION=tls
+   MAIL_FROM_ADDRESS=noreply@perfectfit.com
+
+   # Swagger
+   L5_SWAGGER_GENERATE_ALWAYS=true
+
+   # Auth (optional for prod)
+   SMS_PROVIDER=log  # Start with log for dev
+   GOOGLE_CLIENT_ID=your_google_id
+   # ... other social keys
+   ```
+
+4. **Generate Keys & Setup** 🔑:
+   ```bash
+   php artisan key:generate
+   php artisan passport:keys --force  # For JWT
+   php artisan passport:client --personal  # Personal client for testing
+   php artisan migrate  # Run migrations
+   php artisan l5-swagger:generate  # Build Swagger docs
+   ```
+
+5. **Seed Data (Optional)** 🌱:
+   ```bash
+   php artisan db:seed  # If seeders exist
+   ```
+
+6. **Start Services** 🚀:
+   - Redis: `redis-server` (or ensure it's running).
+   - Queue Worker: In a new terminal, `php artisan queue:work` (for emails).
+   - Server: `php artisan serve`.
+   Hit `http://localhost:8000/docs` for Swagger!
+
+## 🚀 How to Run & Test
+1. **Launch the API** 🌐:
+   Ensure Redis and queue worker are up, then `php artisan serve`.
+
+2. **Access Swagger Docs** 📚:
+   Open `http://localhost:8000/docs` – it's your interactive playground. Authorize with JWT tokens and test endpoints live.
+
+3. **Test Auth Flow** 🔐:
+   - Register: POST `/api/auth/register` with email/password.
+   - Verify Email: Check your inbox (or logs if `MAIL_MAILER=log`).
+   - Login: POST `/api/auth/login` → Get JWT token.
+   - Use token: `Authorization: Bearer {token}` in headers.
+
+4. **Device Management Example** 📱:
+   On login, include device info:
+   ```json
+   {
+     "email": "test@example.com",
+     "password": "password",
+     "device_id": "uuid-here",
+     "device_name": "iPhone 14",
+     "device_type": "ios"
+   }
+   ```
+   Then GET `/api/devices` to list sessions.
+
+5. **Stop Everything** 🛑:
+   Ctrl+C on servers; `php artisan queue:stop` if needed.
+
+## 📁 Project Structure
+Like a well-organized Laravel API repo:
 ```
 perfect_fit/
 ├── app/
-│   ├── Enums/                    # Enumerations & Constants
-│   │   ├── Users.php
-│   │   ├── UserDevice.php
-│   │   ├── PaymentAccount.php
-│   │   ├── ProductReview.php
-│   │   ├── BodyMeasurement.php
-│   │   ├── OrderReturn.php
-│   │   ├── SocialAuth.php
-│   │   ├── OTP.php
-│   │   └── Utility.php
-│   ├── Http/Controllers/API/
+│   ├── Enums/          # Constants like UserDevice types 📋
+│   ├── Http/Controllers/API/  # Endpoint handlers 🛠️
 │   │   ├── AuthController.php
-│   │   ├── SocialAuthController.php
-│   │   ├── OtpController.php
 │   │   ├── DeviceController.php
 │   │   ├── ProductController.php
-│   │   ├── ProductReviewController.php
-│   │   ├── PerfectFitController.php
-│   │   ├── BrandController.php
-│   │   ├── CartController.php
-│   │   ├── WishlistController.php
-│   │   ├── OrderController.php
-│   │   ├── OrderReturnController.php
-│   │   ├── PaymentController.php
-│   │   └── Admin/...              # Admin controllers
-│   ├── Models/
+│   │   └── Admin/      # Admin-specific controllers
+│   ├── Models/         # Eloquent models 📊
 │   │   ├── User.php
 │   │   ├── UserDevice.php
-│   │   ├── Product.php
-│   │   ├── ProductReview.php
-│   │   ├── ReviewReaction.php
-│   │   ├── UserBodyMeasurement.php
-│   │   ├── Order.php
-│   │   ├── OrderReturn.php
-│   │   ├── PaymentAccount.php
-│   │   └── ...
-│   ├── Repositories/              # Database queries
-│   │   ├── UserDeviceRepository.php
-│   │   ├── ProductReviewRepository.php
-│   │   ├── PaymentAccountRepository.php
-│   │   ├── OrderReturnRepository.php
-│   │   └── ...
-│   ├── Services/                  # Business logic
-│   │   ├── UserDeviceService.php
-│   │   ├── ProductReviewService.php
-│   │   ├── PerfectFitService.php
-│   │   ├── OrderReturnService.php
-│   │   ├── SocialAuthService.php
-│   │   ├── OtpService.php
-│   │   └── ...
-├── config/
-│   └── l5-swagger.php            # Swagger configuration
-├── routes/
-│   ├── api.php                   # API routes
-│   └── web.php                   # Web routes (including docs)
-└── database/
-    └── migrations/               # Database migrations
+│   │   └── Order.php
+│   ├── Repositories/   # Data access layer 🔍
+│   │   └── UserDeviceRepository.php
+│   └── Services/       # Business logic 🎯
+│       ├── OtpService.php
+│       └── PerfectFitService.php  # AI size recs
+├── config/             # Configs 📄
+│   └── l5-swagger.php
+├── database/           # Migrations & seeds 🗄️
+├── docs/               # Module docs 📖
+│   ├── authentication.md
+│   └── DEVICE_MANAGEMENT_API_DOCUMENTATION.md
+├── routes/             # API routes 🚏
+│   └── api.php
+├── .env.example        # Env template 📋
+├── composer.json       # PHP deps 📦
+└── README.md           # You're reading it! 📖
 ```
 
-## 📧 Support
+## 📈 Key Features
+- **Multi-Auth**: Email/password, social (Google/FB/TikTok), phone OTP (Twilio/eSMS) 🔐
+- **Device Tracking**: Multi-device support with FCM tokens, revocation, and trust flags 📱
+- **E-Commerce Core**: Products, cart, wishlist, orders, payments (VNPay/COD), shipping 🛒
+- **Advanced Modules**: AI size recs (Perfect Fit AI), reviews with likes, returns/refunds 🤖
+- **Admin APIs**: Dashboard stats, user/order/product CRUD 📊
+- **Swagger Docs**: Auto-generated, interactive UI at `/docs` 📚
+- **Queues & Caching**: Redis-powered for emails and perf 🚀
 
-If you encounter any issues during setup, please check:
-1. PHP version compatibility (8.2+)
-2. All required extensions are installed
-3. Database connection is working
-4. Redis server is running and accessible
-5. Queue worker is running for email processing
-6. Environment variables are properly set
+## 💡 API Modules Quick Ref
+| Module | Key Endpoints | Notes |
+|--------|---------------|-------|
+| **Auth** | `/api/auth/register`, `/api/auth/login` | JWT + email verify |
+| **Social** | `/api/auth/social/google` | OAuth token exchange |
+| **OTP** | `/api/auth/phone/send-otp` | SMS via Twilio/etc. |
+| **Devices** | `/api/devices`, DELETE `/api/devices/{id}` | Multi-session magic |
+| **Products** | GET `/api/products`, POST `/api/cart/add` | Search/filters |
+| **Orders** | POST `/api/orders`, GET `/api/orders/{id}` | Tracking + refunds |
+| **Admin** | GET `/api/admin/dashboard`, POST `/api/admin/products` | Stats + CRUD |
 
-### Email Processing Flow
-This application uses Redis queues for handling email sending:
-1. **Email verification** and **password reset** emails are queued
-2. **Queue worker** processes emails in background
-3. **Redis** stores queue jobs and handles job distribution
-4. Make sure both Redis and queue worker are running for emails to send
+## 🛠️ Troubleshooting
+- **Passport Errors** ⚠️: `php artisan passport:keys --force` and check `.env` for `SESSION_DRIVER=redis`.
+- **Email Not Sending** 📧: Ensure queue worker runs (`php artisan queue:work`) and Redis is up (`redis-cli ping`).
+- **Swagger Blank** 🚫: `php artisan l5-swagger:generate && php artisan config:clear`.
+- **DB Connection Fail** 🗄️: Verify `.env` creds; create DB manually if needed.
+- **Social Auth Fails** 🔗: Double-check OAuth keys in `.env`; test with ngrok for callbacks.
+- **Permissions** 🔒: `chmod -R 755 storage bootstrap/cache`.
 
-## 📱 Device Management & Session Tracking
+Pro Tip: For dev, set `SMS_PROVIDER=log` to skip SMS costs – it logs OTPs to console.
 
-The application includes comprehensive device management and session tracking capabilities:
+## 🤝 Contributing
+Fork it, PR it, or issue it! Follow Laravel's [contrib guide](https://laravel.com/docs/contributions). Let's make this API even more perfect. 🌟
 
-### Features
+## 📜 License
+MIT License (see `LICENSE`).
 
-- **Multi-Device Support**: Users can login from multiple devices simultaneously
-- **Device Tracking**: Track device information (type, model, OS version, app version)
-- **Session Management**: Monitor and manage active sessions across devices
-- **Trusted Devices**: Mark devices as trusted for enhanced security
-- **FCM Integration**: Support for Firebase Cloud Messaging tokens
-- **Device Revocation**: Ability to revoke access from specific devices or all devices
+## 📞 Support
+Hit up [GitHub Issues](https://github.com/binhchay1/perfect-fit-api/issues) or check `docs/` for module guides. Email: binhchay1@gmail.com.
 
-### Device Information Tracked
-
-- Device ID (unique identifier)
-- Device name (user-friendly name)
-- Device type (iOS, Android, Web, Desktop, Tablet)
-- Device model
-- OS version
-- App version
-- FCM token (for push notifications)
-- IP address
-- User agent
-- Last used timestamp
-- Active status
-- Trusted status
-
-### API Endpoints
-
-#### Device Management
-- `GET /api/devices` - Get user's devices
-- `PUT /api/devices/{id}/name` - Update device name
-- `POST /api/devices/{id}/trust` - Toggle device trust status
-- `DELETE /api/devices/{id}` - Revoke/deactivate device
-- `POST /api/devices/revoke-others` - Revoke all other devices
-- `PUT /api/devices/fcm-token` - Update FCM token
-
-### Architecture
-
-The device management follows clean architecture principles:
-
-#### **Enum** (`app/Enums/UserDevice.php`)
-- Defines device types, statuses, and constants
-- Centralized configuration for device-related values
-
-#### **Model** (`app/Models/UserDevice.php`)
-- Defines table structure and relationships
-- Contains only data definition (no business logic)
-
-#### **Repository** (`app/Repositories/UserDeviceRepository.php`)
-- Handles all database queries
-- Provides data access layer
-- Methods for CRUD operations and complex queries
-
-#### **Service** (`app/Services/UserDeviceService.php`)
-- Contains business logic for device management
-- Orchestrates operations between repository and controllers
-- Handles device registration, updates, and revocation logic
-
-#### **Controller** (`app/Http/Controllers/API/DeviceController.php`)
-- Handles HTTP requests and responses
-- Uses service layer for business logic
-- Returns formatted API responses
-
-### Security Features
-
-1. **Session Isolation**: Each device maintains its own token
-2. **Selective Revocation**: Revoke specific devices without affecting others
-3. **Trust Management**: Enhanced security for untrusted devices
-4. **Activity Monitoring**: Track last used timestamp for security audits
-5. **IP Tracking**: Monitor device locations for suspicious activity
-
-### Usage Example
-
-#### Login with Device Information
-```bash
-POST /api/auth/login
-{
-  "email": "user@example.com",
-  "password": "password",
-  "device_id": "unique-device-id",
-  "device_name": "My iPhone",
-  "device_type": "ios",
-  "device_model": "iPhone 14 Pro",
-  "os_version": "17.0",
-  "app_version": "1.0.0",
-  "fcm_token": "fcm-token-here",
-  "remember_device": true
-}
-```
-
-#### Get All Devices
-```bash
-GET /api/devices
-Authorization: Bearer your_token_here
-```
-
-#### Revoke Device
-```bash
-DELETE /api/devices/{device_id}
-Authorization: Bearer your_token_here
-```
-
----
-
-**Happy coding! 🚀**
+## 💡 Env Vars Quick Table
+| Var | What It Does | Default |
+|-----|--------------|---------|
+| `REDIS_HOST` | Redis server | 127.0.0.1 |
+| `QUEUE_CONNECTION` | Email queue driver | redis |
+| `L5_SWAGGER_GENERATE_ALWAYS` | Auto-docs on request | false |
+| `SMS_PROVIDER` | OTP service (log/twilio/etc.) | log |
+| `GOOGLE_CLIENT_ID` | Google OAuth | - |
+| `TWILIO_SID` | Twilio account | - |
